@@ -77,3 +77,4 @@ Berdasarkan metadata model aktual (PRD Bab 3.2 & Bab 19.5):
 1. **Domain Shift:** Dataset bersumber dari proyek kerusakan kendaraan umum. Akurasi pada komponen khusus motor (misal: spakbor melengkung, batok lampu) memerlukan validasi lapangan lanjutan.
 2. **Cakupan Pemeriksaan:** Model hanya mendeteksi anomali visual pada bodi luar. Model **TIDAK** dapat mendiagnosis mesin internal, rangka tersembunyi, sistem kelistrikan, riwayat banjir, atau keabsahan dokumen kendaraan (STNK/BPKB).
 3. **Penyajian Hasil:** Hasil inferensi adalah alat bantu transparansi penjual dan referensi komparasi pembeli, bukan sertifikat appraisal mutlak atau jaminan harga transaksi final.
+

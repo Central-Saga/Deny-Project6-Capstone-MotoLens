@@ -8,6 +8,7 @@ use App\Enums\TaxStatus;
 use App\Enums\VerificationStatus;
 use App\Models\MotorcycleInspection;
 use App\Models\MotorcycleModel;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -229,7 +230,7 @@ class YoloInspectionService
         // Catat metrik inferensi ke spatie/laravel-activitylog
         activity('inspection')
             ->performedOn($inspection)
-            ->causedBy($userId)
+            ->causedBy(User::find($userId))
             ->withProperties([
                 'total_damages' => $totalDamages,
                 'accident_count' => $accidentCount,

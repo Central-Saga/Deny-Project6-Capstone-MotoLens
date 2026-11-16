@@ -16,3 +16,4 @@ Aplikasi Android native sebagai alat inspeksi lapangan dan publikasi iklan motor
 3. **Form Spesifikasi Kendaraan:** Input model referensi, tahun, odometer, dan status pajak.
 4. **Inspeksi Bodi AI Lapangan:** Pengiriman foto dan koordinat GPS secara sinkron/asinkron ke backend, menampilkan foto anotasi dengan deteksi kerusakan visual (`Accident`, `Dent`, `Scratch`).
 5. **Rincian Taksiran Harga & Penerbitan Iklan:** Taksiran sistem berbasis aturan dan penerbitan listing langsung ke marketplace.
+

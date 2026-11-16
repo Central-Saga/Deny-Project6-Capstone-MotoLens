@@ -104,3 +104,4 @@ motolens/
 |---|---|---|
 | Admin | `admin@motolens.id` | `Password123!` (dapat diubah via `DEMO_ADMIN_PASSWORD`) |
 | User | `user@motolens.id` | `Password123!` (dapat diubah via `DEMO_USER_PASSWORD`) |
+

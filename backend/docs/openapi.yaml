@@ -1,0 +1,717 @@
+openapi: 3.0.3
+info:
+  title: MotoLens REST API
+  description: >
+    Dokumentasi resmi Kontrak REST API MotoLens v1.0.0.
+    Menyediakan layanan Marketplace Motor Bekas Transparan dengan Inspeksi Kerusakan Bodi AI
+    (YOLOv8 ONNX) dan Taksiran Harga Berbasis Aturan Transparan (Explainable Price Breakdown).
+  version: 1.0.0
+  contact:
+    name: MotoLens Developer Team
+    email: dev@motolens.id
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local Development Server
+  - url: https://api.motolens.id/api/v1
+    description: Production Server
+
+tags:
+  - name: Health
+    description: Pemeriksaan kondisi database, redis, dan model machine learning
+  - name: Auth
+    description: Registrasi, login, logout, dan manajemen profil via Laravel Sanctum
+  - name: Motorcycle Models
+    description: Master referensi model motor aktif
+  - name: Motorcycles
+    description: Katalog motor, perbandingan unit, dan manajemen listing (Garasi Saya)
+  - name: Inspections
+    description: Inferensi AI kerusakan bodi motor, sertifikat inspeksi, dan feedback
+  - name: Inquiries
+    description: Pengajuan dan peninjauan jadwal survei fisik antara pembeli & penjual
+  - name: Admin
+    description: Dashboard metrik pasar, moderasi listing, audit activity logs, dan CRUD model
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check koneksi sistem backend
+      responses:
+        '200':
+          description: Sistem beroperasi normal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '503':
+          description: Salah satu subsistem mengalami gangguan
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrasi publik akun pembeli/penjual (role user)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password]
+              properties:
+                name:
+                  type: string
+                  example: Budi Santoso
+                email:
+                  type: string
+                  format: email
+                  example: budi@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: Rahasia123!
+                phone_whatsapp:
+                  type: string
+                  example: '08123456789'
+      responses:
+        '201':
+          description: Registrasi berhasil dan menerbitkan token Sanctum
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '422':
+          description: Validasi input gagal
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login pengguna menggunakan email dan password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@motolens.id
+                password:
+                  type: string
+                  format: password
+                  example: Password123!
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSuccessResponse'
+        '401':
+          description: Kredensial tidak valid
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke access token aktif
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout berhasil
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Ambil profil dan peran pengguna yang sedang login
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Data profil berhasil diambil
+
+  /motorcycle-models:
+    get:
+      tags: [Motorcycle Models]
+      summary: Daftar referensi model motor aktif
+      parameters:
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar model berhasil diambil
+
+  /motorcycles:
+    get:
+      tags: [Motorcycles]
+      summary: Katalog publik motor bekas (moderation approved)
+      parameters:
+        - name: brand
+          in: query
+          schema:
+            type: string
+        - name: model
+          in: query
+          schema:
+            type: string
+        - name: year
+          in: query
+          schema:
+            type: integer
+        - name: min_price
+          in: query
+          schema:
+            type: integer
+        - name: max_price
+          in: query
+          schema:
+            type: integer
+        - name: price_label
+          in: query
+          schema:
+            type: string
+            enum: [good_deal, fair_price, above_market]
+        - name: condition_grade
+          in: query
+          schema:
+            type: string
+            enum: [A, B, C, D]
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [newest, price_asc, price_desc]
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Katalog berhasil diambil
+
+  /motorcycles/compare:
+    get:
+      tags: [Motorcycles]
+      summary: Komparasi 2–3 unit motor berdampingan
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          description: ID motor dipisahkan tanda koma (2 sampai 3 ID)
+          schema:
+            type: string
+            example: '1,2'
+      responses:
+        '200':
+          description: Data komparasi unit motor
+        '422':
+          description: Jumlah ID tidak sesuai (harus 2-3 unit)
+
+  /motorcycles/{id}:
+    get:
+      tags: [Motorcycles]
+      summary: Detail listing unit motor & Sertifikat Inspeksi AI
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detail unit dan explainable price breakdown
+        '404':
+          description: Motor tidak ditemukan atau belum disetujui
+
+  /my-motorcycles:
+    get:
+      tags: [Motorcycles]
+      summary: Daftar motor milik pengguna aktif (Garasi Saya)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar motor milik pengguna
+
+  /motorcycles:
+    post:
+      tags: [Motorcycles]
+      summary: Terbitkan listing baru dari hasil inspeksi
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inspection_id, title, seller_price, location_address]
+              properties:
+                inspection_id:
+                  type: integer
+                title:
+                  type: string
+                description:
+                  type: string
+                seller_price:
+                  type: integer
+                location_address:
+                  type: string
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '201':
+          description: Listing berhasil diterbitkan (status pending)
+
+  /motorcycles/{id}:
+    put:
+      tags: [Motorcycles]
+      summary: Perbarui data/harga listing motor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Listing berhasil diperbarui
+    delete:
+      tags: [Motorcycles]
+      summary: Soft delete / arsipkan listing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Listing berhasil diarsipkan
+
+  /motorcycles/inspect:
+    post:
+      tags: [Inspections]
+      summary: Jalankan inspeksi AI pada foto bodi motor
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [photo, motorcycle_model_id, year, odometer_km, tax_status]
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                motorcycle_model_id:
+                  type: integer
+                year:
+                  type: integer
+                odometer_km:
+                  type: integer
+                tax_status:
+                  type: string
+                  enum: [active, expired]
+                seller_price:
+                  type: integer
+                source_type:
+                  type: string
+                  enum: [android_camera, web_upload, seed_demo]
+                latitude:
+                  type: number
+                longitude:
+                  type: number
+      responses:
+        '201':
+          description: Inspeksi AI selesai dengan estimasi harga
+        '422':
+          description: Validasi input gagal
+
+  /inspections/{id}:
+    get:
+      tags: [Inspections]
+      summary: Detail sertifikat hasil inspeksi
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detail sertifikat inspeksi
+
+  /motorcycles/{id}/inspections:
+    get:
+      tags: [Inspections]
+      summary: Riwayat inspeksi unit motor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Riwayat inspeksi
+
+  /inspections/{id}/feedback:
+    post:
+      tags: [Inspections]
+      summary: Kirim feedback pengguna atas hasil deteksi inspeksi
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                feedback_type:
+                  type: string
+                  enum: [false_positive, false_negative, incorrect_class, other]
+                comment:
+                  type: string
+      responses:
+        '201':
+          description: Feedback berhasil disimpan
+
+  /inquiries:
+    get:
+      tags: [Inquiries]
+      summary: Daftar jadwal survei fisik
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [buyer, seller]
+      responses:
+        '200':
+          description: Daftar survei fisik
+    post:
+      tags: [Inquiries]
+      summary: Ajukan jadwal survei fisik baru
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [motorcycle_id, appointment_date]
+              properties:
+                motorcycle_id:
+                  type: integer
+                appointment_date:
+                  type: string
+                  format: date-time
+                offered_price:
+                  type: integer
+                notes:
+                  type: string
+      responses:
+        '201':
+          description: Pengajuan survei berhasil dikirim
+
+  /inquiries/{id}/status:
+    patch:
+      tags: [Inquiries]
+      summary: Penjual menerima/menolak/menyelesaikan jadwal survei
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [accepted, rejected, completed]
+      responses:
+        '200':
+          description: Status survei berhasil diubah
+
+  /inquiries/{id}/cancel:
+    post:
+      tags: [Inquiries]
+      summary: Pembeli membatalkan survei fisik
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Jadwal survei berhasil dibatalkan
+
+  /admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Ringkasan analitik pasar dan statistik deteksi AI
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistik dashboard
+
+  /admin/activity-logs:
+    get:
+      tags: [Admin]
+      summary: Audit log aktivitas sistem
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar log audit
+
+  /admin/motorcycles:
+    get:
+      tags: [Admin]
+      summary: Daftar moderasi listing motor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: moderation_status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+      responses:
+        '200':
+          description: Daftar motor untuk moderasi
+
+  /admin/motorcycles/{id}/moderation:
+    patch:
+      tags: [Admin]
+      summary: Setujui atau tolak listing iklan motor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [moderation_status]
+              properties:
+                moderation_status:
+                  type: string
+                  enum: [approved, rejected]
+                rejection_reason:
+                  type: string
+      responses:
+        '200':
+          description: Status moderasi listing berhasil diubah
+
+  /admin/inspections/metrics:
+    get:
+      tags: [Admin]
+      summary: Metrik performa inferensi YOLOv8 ONNX
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Metrik waktu inferensi dan akurasi deteksi
+
+  /admin/motorcycle-models:
+    post:
+      tags: [Admin]
+      summary: Tambah model referensi motor baru
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [brand, model_name, engine_cc, category, standard_price]
+              properties:
+                brand:
+                  type: string
+                model_name:
+                  type: string
+                engine_cc:
+                  type: integer
+                category:
+                  type: string
+                  enum: [matic, sport, bebek, klasik]
+                standard_price:
+                  type: integer
+                price_source:
+                  type: string
+      responses:
+        '201':
+          description: Model referensi berhasil dibuat
+
+  /admin/motorcycle-models/{id}:
+    put:
+      tags: [Admin]
+      summary: Perbarui master model referensi motor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Model referensi berhasil diperbarui
+    delete:
+      tags: [Admin]
+      summary: Nonaktifkan atau hapus model referensi motor
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Model referensi berhasil dihapus/dinonaktifkan
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+  schemas:
+    SuccessResponse:
+      type: object
+      required: [success, message, data, meta]
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operasi berhasil dilakukan.
+        data:
+          type: object
+        meta:
+          type: object
+
+    ErrorResponse:
+      type: object
+      required: [success, message, errors, data]
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Validasi gagal.
+        errors:
+          type: object
+        data:
+          type: 'null'
+          example: null
+
+    AuthSuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login berhasil.
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                email:
+                  type: string
+                roles:
+                  type: array
+                  items:
+                    type: string
+            token:
+              type: string
+              example: 1|64a93f4e1564cf9487c...
+            token_type:
+              type: string
+              example: Bearer
+        meta:
+          type: object

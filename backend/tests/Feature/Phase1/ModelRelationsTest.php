@@ -124,8 +124,8 @@ class ModelRelationsTest extends TestCase
     {
         $honda = MotorcycleModel::factory()->create(['brand' => 'Honda', 'model_name' => 'Vario 160', 'standard_price' => 28_000_000]);
         $yamaha = MotorcycleModel::factory()->create(['brand' => 'Yamaha', 'model_name' => 'NMAX', 'standard_price' => 34_000_000]);
-        $cheap = Motorcycle::factory()->approved()->forModel($honda)->state(['seller_price' => 12_000_000, 'created_at' => now()->subDays(3)])->create();
-        $mid = Motorcycle::factory()->approved()->forModel($honda)->state(['seller_price' => 18_000_000, 'created_at' => now()->subDays(2)])->create();
+        $cheap = Motorcycle::factory()->approved()->forModel($honda)->state(['seller_price' => 12_000_000, 'location_address' => 'Kuta, Badung, Bali', 'created_at' => now()->subDays(3)])->create();
+        $mid = Motorcycle::factory()->approved()->forModel($honda)->state(['seller_price' => 18_000_000, 'location_address' => 'Denpasar Selatan, Denpasar, Bali', 'created_at' => now()->subDays(2)])->create();
         $pricey = Motorcycle::factory()->approved()->forModel($yamaha)->state(['seller_price' => 30_000_000, 'location_address' => 'Ubud, Gianyar, Bali', 'created_at' => now()->subDay()])->create();
 
         $this->assertEqualsCanonicalizing([$cheap->id, $mid->id], Motorcycle::ofBrand('Honda')->pluck('id')->all());
