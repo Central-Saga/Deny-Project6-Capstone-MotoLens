@@ -40,3 +40,4 @@ class ReportResource extends JsonResource
         ];
     }
 }
+

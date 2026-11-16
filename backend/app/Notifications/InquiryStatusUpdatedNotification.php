@@ -49,3 +49,4 @@ class InquiryStatusUpdatedNotification extends Notification
         ];
     }
 }
+

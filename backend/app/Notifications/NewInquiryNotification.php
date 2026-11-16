@@ -36,3 +36,4 @@ class NewInquiryNotification extends Notification
         ];
     }
 }
+

@@ -43,3 +43,4 @@ class InspectionFeedbackResource extends JsonResource
         ];
     }
 }
+
