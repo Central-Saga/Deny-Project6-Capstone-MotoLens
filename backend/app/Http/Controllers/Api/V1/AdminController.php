@@ -2,26 +2,34 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\FeedbackReviewStatus;
 use App\Enums\InspectionStatus;
 use App\Enums\ListingStatus;
 use App\Enums\ModerationStatus;
+use App\Enums\ReportStatus;
 use App\Enums\VerificationStatus;
 use App\Events\ListingModerationStatusChanged;
 use App\Http\Controllers\Api\Concerns\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateModerationRequest;
 use App\Http\Resources\ActivityLogResource;
+use App\Http\Resources\InspectionFeedbackResource;
 use App\Http\Resources\MotorcycleDetailResource;
 use App\Http\Resources\MotorcycleResource;
+use App\Http\Resources\ReportResource;
 use App\Models\Inquiry;
+use App\Models\InspectionFeedback;
 use App\Models\Motorcycle;
 use App\Models\MotorcycleInspection;
+use App\Models\Report;
 use App\Models\User;
 use App\Notifications\ListingModeratedNotification;
+use App\Notifications\MotorcycleModerationNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Spatie\Activitylog\Models\Activity;
 
 class AdminController extends Controller
@@ -171,7 +179,7 @@ class AdminController extends Controller
         event(new ListingModerationStatusChanged($motorcycle, $oldStatus, $newStatus, $reason));
 
         if ($seller = $motorcycle->seller) {
-            $seller->notify(new ListingModeratedNotification($motorcycle, $newStatus, $reason));
+            $seller->notify(new MotorcycleModerationNotification($motorcycle, $newStatus, $reason));
         }
 
         $motorcycle->load(['motorcycleModel', 'seller', 'latestInspection', 'media']);
@@ -224,6 +232,110 @@ class AdminController extends Controller
                 ],
             ],
             message: 'Metrik performa model inspeksi AI berhasil diambil.'
+        );
+    }
+
+    /**
+     * Daftar laporan listing dari pengguna.
+     */
+    public function reports(Request $request): JsonResponse
+    {
+        $perPage = min(50, max(1, (int) $request->query('per_page', 15)));
+        $status = $request->query('status');
+
+        $query = Report::with(['motorcycle', 'reporter', 'reviewer'])->latest('id');
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $paginator = $query->paginate($perPage);
+
+        return $this->successResponse(
+            data: ReportResource::collection($paginator->items()),
+            message: 'Daftar laporan listing berhasil diambil.',
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ]
+        );
+    }
+
+    /**
+     * Tindak lanjuti dan ubah status laporan listing.
+     */
+    public function updateReport(Request $request, int $id): JsonResponse
+    {
+        $report = Report::findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', Rule::in(ReportStatus::values())],
+        ]);
+
+        $report->update([
+            'status' => ReportStatus::from($validated['status']),
+            'reviewed_by' => $request->user()->id,
+        ]);
+
+        $report->load(['motorcycle', 'reporter', 'reviewer']);
+
+        return $this->successResponse(
+            data: new ReportResource($report),
+            message: "Status laporan berhasil diubah menjadi {$report->status->value}."
+        );
+    }
+
+    /**
+     * Daftar feedback hasil inspeksi AI dari pengguna.
+     */
+    public function inspectionFeedbacks(Request $request): JsonResponse
+    {
+        $perPage = min(50, max(1, (int) $request->query('per_page', 15)));
+        $reviewStatus = $request->query('review_status');
+
+        $query = InspectionFeedback::with(['inspection', 'submitter', 'reviewer'])->latest('id');
+
+        if ($reviewStatus) {
+            $query->where('review_status', $reviewStatus);
+        }
+
+        $paginator = $query->paginate($perPage);
+
+        return $this->successResponse(
+            data: InspectionFeedbackResource::collection($paginator->items()),
+            message: 'Daftar feedback inspeksi AI berhasil diambil.',
+            meta: [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ]
+        );
+    }
+
+    /**
+     * Verifikasi atau tinjau feedback hasil deteksi AI.
+     */
+    public function updateInspectionFeedback(Request $request, int $id): JsonResponse
+    {
+        $feedback = InspectionFeedback::findOrFail($id);
+
+        $validated = $request->validate([
+            'review_status' => ['required', 'string', Rule::in(FeedbackReviewStatus::values())],
+        ]);
+
+        $feedback->update([
+            'review_status' => FeedbackReviewStatus::from($validated['review_status']),
+            'reviewed_by' => $request->user()->id,
+        ]);
+
+        $feedback->load(['inspection', 'submitter', 'reviewer']);
+
+        return $this->successResponse(
+            data: new InspectionFeedbackResource($feedback),
+            message: "Status review feedback berhasil diubah menjadi {$feedback->review_status->value}."
         );
     }
 }

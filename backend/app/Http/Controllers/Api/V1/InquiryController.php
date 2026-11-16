@@ -6,6 +6,7 @@ use App\Enums\InquiryStatus;
 use App\Enums\ListingStatus;
 use App\Enums\ModerationStatus;
 use App\Events\InquiryCreated;
+use App\Events\InquiryStatusUpdated;
 use App\Http\Controllers\Api\Concerns\ApiResponseTrait;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreInquiryRequest;
@@ -14,6 +15,8 @@ use App\Http\Resources\InquiryResource;
 use App\Models\Inquiry;
 use App\Models\Motorcycle;
 use App\Notifications\InquiryReceivedNotification;
+use App\Notifications\InquiryStatusUpdatedNotification;
+use App\Notifications\NewInquiryNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -113,7 +116,7 @@ class InquiryController extends Controller
         event(new InquiryCreated($inquiry));
 
         if ($seller = $motorcycle->seller) {
-            $seller->notify(new InquiryReceivedNotification($inquiry));
+            $seller->notify(new NewInquiryNotification($inquiry));
         }
 
         $inquiry->load(['motorcycle.motorcycleModel', 'motorcycle.seller', 'buyer']);
@@ -141,6 +144,7 @@ class InquiryController extends Controller
         }
 
         $statusStr = $request->validated()['status'];
+        $oldStatus = $inquiry->status;
         $newStatus = InquiryStatus::from($statusStr);
 
         $inquiry->status = $newStatus;
@@ -155,6 +159,10 @@ class InquiryController extends Controller
         } elseif ($newStatus === InquiryStatus::Rejected && $inquiry->motorcycle->status === ListingStatus::Booked) {
             $inquiry->motorcycle->update(['status' => ListingStatus::Available->value]);
         }
+
+        // Trigger event & notifikasi ke pembeli
+        event(new InquiryStatusUpdated($inquiry, $oldStatus, $newStatus, 'seller'));
+        $inquiry->buyer?->notify(new InquiryStatusUpdatedNotification($inquiry, 'seller'));
 
         $inquiry->load(['motorcycle.motorcycleModel', 'motorcycle.seller', 'buyer']);
 
@@ -187,6 +195,7 @@ class InquiryController extends Controller
             );
         }
 
+        $oldStatus = $inquiry->status;
         $inquiry->status = InquiryStatus::Cancelled;
         $inquiry->save();
 
@@ -194,6 +203,10 @@ class InquiryController extends Controller
         if ($inquiry->motorcycle->status === ListingStatus::Booked) {
             $inquiry->motorcycle->update(['status' => ListingStatus::Available->value]);
         }
+
+        // Trigger event & notifikasi ke penjual
+        event(new InquiryStatusUpdated($inquiry, $oldStatus, InquiryStatus::Cancelled, 'buyer'));
+        $inquiry->motorcycle?->seller?->notify(new InquiryStatusUpdatedNotification($inquiry, 'buyer'));
 
         $inquiry->load(['motorcycle.motorcycleModel', 'motorcycle.seller', 'buyer']);
 

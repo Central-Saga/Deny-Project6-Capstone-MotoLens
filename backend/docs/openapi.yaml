@@ -323,6 +323,100 @@ paths:
         '200':
           description: Listing berhasil diarsipkan
 
+  /motorcycles/{id}/favorite:
+    post:
+      tags: [Favorites]
+      summary: Toggle simpan atau hapus unit motor dari daftar favorit
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Status favorit berhasil diperbarui
+
+  /favorites:
+    get:
+      tags: [Favorites]
+      summary: Daftar motor favorit pengguna yang sedang login
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar motor favorit
+
+  /motorcycles/{id}/reports:
+    post:
+      tags: [Reports]
+      summary: Laporkan listing motor mencurigakan atau indikasi penipuan
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  enum: [fake_odometer, wrong_price, suspicious_seller, inappropriate_content, spam, other]
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Laporan berhasil dikirim
+        '422':
+          description: Validasi gagal atau dilarang melaporkan motor sendiri
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: Daftar notifikasi pengguna aktif beserta jumlah belum dibaca
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Daftar notifikasi berhasil diambil
+
+  /notifications/{id}/read:
+    patch:
+      tags: [Notifications]
+      summary: Tandai 1 notifikasi telah dibaca
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notifikasi ditandai dibaca
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Tandai seluruh notifikasi telah dibaca
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Seluruh notifikasi ditandai dibaca
+
   /motorcycles/inspect:
     post:
       tags: [Inspections]
@@ -642,6 +736,92 @@ paths:
       responses:
         '200':
           description: Model referensi berhasil dihapus/dinonaktifkan
+
+  /admin/reports:
+    get:
+      tags: [Admin]
+      summary: Daftar laporan listing motor dari pengguna
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, reviewing, resolved, dismissed]
+      responses:
+        '200':
+          description: Daftar laporan
+
+  /admin/reports/{id}:
+    patch:
+      tags: [Admin]
+      summary: Tindak lanjuti atau ubah status laporan listing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [open, reviewing, resolved, dismissed]
+      responses:
+        '200':
+          description: Status laporan berhasil diperbarui
+
+  /admin/inspection-feedbacks:
+    get:
+      tags: [Admin]
+      summary: Daftar feedback koreksi deteksi AI dari pengguna
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: review_status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, rejected]
+      responses:
+        '200':
+          description: Daftar feedback deteksi AI
+
+  /admin/inspection-feedbacks/{id}:
+    patch:
+      tags: [Admin]
+      summary: Tinjau dan update status verifikasi feedback inspeksi AI
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [review_status]
+              properties:
+                review_status:
+                  type: string
+                  enum: [pending, accepted, rejected]
+      responses:
+        '200':
+          description: Status review feedback berhasil diperbarui
 
 components:
   securitySchemes:

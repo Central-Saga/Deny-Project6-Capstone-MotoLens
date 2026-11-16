@@ -3,11 +3,14 @@
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AdminMotorcycleModelController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\FavoriteController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\InquiryController;
 use App\Http\Controllers\Api\V1\InspectionController;
 use App\Http\Controllers\Api\V1\MotorcycleController;
 use App\Http\Controllers\Api\V1\MotorcycleModelController;
+use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\ReportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,6 +60,18 @@ Route::prefix('v1')->group(function () {
         Route::patch('/inquiries/{id}/status', [InquiryController::class, 'updateStatus'])->whereNumber('id');
         Route::post('/inquiries/{id}/cancel', [InquiryController::class, 'cancel'])->whereNumber('id');
 
+        // Notifikasi Pengguna (Bab 5.8 & Bab 7 Fase 4)
+        Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+
+        // Favorit Motor (Bab 5.8 & Bab 10.3)
+        Route::post('/motorcycles/{id}/favorite', [FavoriteController::class, 'toggle'])->whereNumber('id');
+        Route::get('/favorites', [FavoriteController::class, 'index']);
+
+        // Pelaporan Listing (Bab 5.8 & Bab 10.3)
+        Route::post('/motorcycles/{id}/reports', [ReportController::class, 'store'])->whereNumber('id');
+
         // --- Admin Endpoints (Bab 6.6 - Spatie role:admin)
         Route::prefix('admin')->middleware('role:admin')->group(function () {
             Route::get('/dashboard', [AdminController::class, 'dashboard']);
@@ -64,6 +79,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/motorcycles', [AdminController::class, 'motorcycles']);
             Route::patch('/motorcycles/{id}/moderation', [AdminController::class, 'moderateListing'])->whereNumber('id');
             Route::get('/inspections/metrics', [AdminController::class, 'inspectionMetrics']);
+
+            // Moderasi Laporan & Review Feedback AI (Bab 5.8 & Bab 10.3)
+            Route::get('/reports', [AdminController::class, 'reports']);
+            Route::patch('/reports/{id}', [AdminController::class, 'updateReport'])->whereNumber('id');
+            Route::get('/inspection-feedbacks', [AdminController::class, 'inspectionFeedbacks']);
+            Route::patch('/inspection-feedbacks/{id}', [AdminController::class, 'updateInspectionFeedback'])->whereNumber('id');
 
             // CRUD Model Referensi Motor
             Route::post('/motorcycle-models', [AdminMotorcycleModelController::class, 'store']);

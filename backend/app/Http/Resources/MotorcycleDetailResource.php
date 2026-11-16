@@ -19,6 +19,10 @@ class MotorcycleDetailResource extends JsonResource
     {
         $inspection = $this->latestInspection;
 
+        // Check if currently authenticated user has favorited this motorcycle
+        $user = auth('sanctum')->user();
+        $isFavorited = $user ? $this->favoritedBy()->where('user_id', $user->id)->exists() : false;
+
         // Build or extract explainable price breakdown
         $breakdown = $this->resolvePriceBreakdown($inspection);
 
@@ -64,6 +68,9 @@ class MotorcycleDetailResource extends JsonResource
         // Inspection certificate info
         $certificate = null;
         if ($inspection) {
+            $rawPhotoUrl = $inspection->getFirstMediaUrl(MotorcycleInspection::MEDIA_RAW_PHOTO) ?: null;
+            $annotatedPhotoUrl = $inspection->getFirstMediaUrl(MotorcycleInspection::MEDIA_ANNOTATED_PHOTO) ?: null;
+
             $certificate = [
                 'id' => $inspection->id,
                 'certificate_number' => sprintf('ML-CERT-%04d-%06d', $inspection->created_at?->year ?? now()->year, $inspection->id),
@@ -73,13 +80,21 @@ class MotorcycleDetailResource extends JsonResource
                 'model_sha256' => $inspection->model_sha256,
                 'confidence_threshold' => (float) $inspection->confidence_threshold,
                 'nms_iou_threshold' => (float) $inspection->nms_iou_threshold,
+                'source_type' => $inspection->source_type instanceof \BackedEnum
+                    ? $inspection->source_type->value
+                    : $inspection->source_type,
                 'verification_status' => $inspection->verification_status instanceof \BackedEnum
                     ? $inspection->verification_status->value
                     : $inspection->verification_status,
+                'image_width' => $inspection->image_width ? (int) $inspection->image_width : null,
+                'image_height' => $inspection->image_height ? (int) $inspection->image_height : null,
                 'inference_time_ms' => $inspection->inference_time_ms,
-                'annotated_image_url' => $inspection->getFirstMediaUrl(MotorcycleInspection::MEDIA_ANNOTATED_PHOTO) ?: null,
-                'raw_image_url' => $inspection->getFirstMediaUrl(MotorcycleInspection::MEDIA_RAW_PHOTO) ?: null,
+                'annotated_image_url' => $annotatedPhotoUrl,
+                'annotated_photo_url' => $annotatedPhotoUrl,
+                'raw_image_url' => $rawPhotoUrl,
+                'raw_photo_url' => $rawPhotoUrl,
                 'detections' => $inspection->detections_json ?? [],
+                'detections_json' => $inspection->detections_json ?? [],
                 'counts' => [
                     'scratch' => (int) $inspection->scratch_count,
                     'dent' => (int) $inspection->dent_count,
@@ -116,9 +131,19 @@ class MotorcycleDetailResource extends JsonResource
             'verification_status' => $this->verification_status instanceof \BackedEnum ? $this->verification_status->value : $this->verification_status,
             'is_camera_verified' => (bool) $this->is_camera_verified,
             'damage_penalty_percent' => (float) $this->damage_penalty_percent,
+            'is_favorited' => $isFavorited,
             'main_image_url' => $mainPhotoUrl ?: null,
             'photos' => $photos,
             'price_breakdown' => $breakdown,
+            'price_histories' => ($this->relationLoaded('priceHistories') || $this->priceHistories()->exists())
+                ? $this->priceHistories->map(fn ($h) => [
+                    'id' => $h->id,
+                    'old_price' => (int) $h->old_price,
+                    'new_price' => (int) $h->new_price,
+                    'changed_by' => $h->changed_by,
+                    'created_at' => $h->created_at?->toISOString(),
+                ])->values()->all()
+                : [],
             'inspection_certificate' => $certificate,
             'seller' => [
                 'id' => $this->seller?->id,
