@@ -1,0 +1,57 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+auth.json
+
+# Dependencies
+vendor/
+node_modules/
+
+# Python Virtual Environments & Bytecode
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Docker Data Volumes
+pgdata/
+redisdata/
+motolens_pgdata/
+motolens_redisdata/
+
+# Logs & Temporary Files
+*.log
+temp/
+/backend/storage/app/temp/*
+/backend/storage/framework/cache/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/testing/*
+/backend/storage/framework/views/*
+/backend/storage/logs/*
+
+# Build Artifacts
+/backend/public/build
+/backend/public/hot
+.next/
+dist/
+build/
+.phpunit.cache
+.phpunit.result.cache
+
+# IDE & OS
+.idea/
+.vscode/
+.fleet/
+.nova/
+.zed/
+.DS_Store
+Thumbs.db
+
+# Ensure 05-model and ML artifacts are explicitly tracked
+!05-model/
+!05-model/**
+!backend/storage/app/ml/
+!backend/storage/app/ml/**
