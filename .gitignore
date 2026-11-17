@@ -41,6 +41,18 @@ build/
 .phpunit.cache
 .phpunit.result.cache
 
+# Frontend Next.js build
+frontend/.next/
+frontend/out/
+frontend/build/
+
+# Android build
+Android-App/.gradle/
+Android-App/build/
+Android-App/app/build/
+*.apk
+*.aab
+
 # IDE & OS
 .idea/
 .vscode/
@@ -50,9 +62,9 @@ build/
 .DS_Store
 Thumbs.db
 
-# Ensure 05-model and ML artifacts are explicitly tracked
-!05-model/
-!05-model/**
+# Ensure ML artifacts are explicitly tracked
+!ML/
+!ML/**
 !backend/storage/app/ml/
 !backend/storage/app/ml/**
 

@@ -1,4 +1,4 @@
-# MotoLens Web Frontend
+# MotoLens Web Frontend (`frontend/`)
 
 Modul aplikasi web marketplace & inspeksi motor bekas MotoLens.
 
@@ -7,6 +7,18 @@ Modul aplikasi web marketplace & inspeksi motor bekas MotoLens.
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS & Lucide Icons
 - **State & Data Fetching:** Server Components by default, centralized API client ke Laravel REST API `/api/v1`
+
+## Struktur Direktori Monorepo Terkait
+```text
+frontend/
+├── src/
+│   ├── app/          # App Router Pages & Layouts
+│   ├── components/   # UI & Domain Components
+│   ├── hooks/        # Custom React Hooks
+│   ├── services/     # API Client & Endpoints
+│   ├── types/        # TypeScript Interfaces & Enums
+│   └── utils/        # Helper Functions & Formatters
+```
 
 ## Lingkup Fitur (Fase 4)
 1. **Katalog Publik & Pencarian:** Filter merek, model, rentang tahun, kilometer, rentang harga, grade visual, dan label harga.

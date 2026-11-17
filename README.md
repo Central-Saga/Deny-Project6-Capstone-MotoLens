@@ -10,34 +10,42 @@ Struktur direktori monorepo MotoLens mengacu pada Bab 17 PRD:
 
 ```text
 motolens/
-├── 05-model/                 # Artefak model YOLOv8 ONNX, notebook training, dan metrik evaluasi
-│   ├── evaluation/
-│   │   └── metrics.json      # Ringkasan metrik eksperimen (mAP@50 84.34%)
-│   ├── model_damage.onnx     # Artefak ONNX (Opset 18, input 1x3x640x640, output 1x7x8400)
-│   ├── model_metadata.json   # Metadata immutable model & threshold
-│   ├── MotoLens_YOLOv8_Training.ipynb # Notebook training Colab (kredensial diamankan)
-│   └── yolo_infer.py         # Skrip Python inferensi mandiri
+├── Android-App/              # Aplikasi Android Kotlin CameraX & Geotagging (Fase 5)
 ├── backend/                  # Laravel 13 REST API Core
 │   ├── app/
 │   │   ├── Enums/            # Domain Enums (DamageClass, PriceLabel, ConditionGrade, dll)
-│   │   ├── Http/Requests/    # Form Requests validasi input
+│   │   ├── Events/           # Domain Events (InquiryCreated, InquiryStatusUpdated, dll)
+│   │   ├── Http/
+│   │   │   ├── Controllers/  # Thin Controllers REST API /api/v1
+│   │   │   ├── Requests/     # Form Requests validasi input
+│   │   │   └── Resources/    # API Resources (Explainable Price Breakdown)
 │   │   ├── Models/           # Eloquent Models & Spatie traits
+│   │   ├── Notifications/    # Database Notifications (Inquiry, Moderation)
 │   │   ├── Policies/         # Otorisasi kepemilikan listing, inquiry, dan admin
 │   │   ├── Repositories/     # Query katalog terisolasi & survey booking
 │   │   └── Services/         # YoloInspectionService, PriceEstimationService, MotorcycleService, InquiryService
 │   ├── config/motolens.php   # Konfigurasi parameter ML & rumus depresiasi harga
 │   ├── database/             # 15 Migrations, 5 Seeders (50+ listing Bali), Factories
+│   ├── docs/openapi.yaml     # Spesifikasi mesin OpenAPI 3.0
+│   ├── routes/api.php        # Routing REST API /api/v1 terlindungi Sanctum & Spatie
 │   ├── scripts/yolo_infer.py # Skrip inferensi backend via Process
 │   ├── storage/app/ml/       # Direktori runtime model ONNX
-│   └── tests/                # 74 Automated Tests (Unit & Feature)
-├── docs/                     # Dokumentasi proyek
-│   ├── ML_MODEL_CARD.md      # Model Card YOLOv8n damage detection
-│   └── PRD.md                # Spesifikasi lengkap MotoLens PRD v2.0.1
+│   └── tests/                # 118 Automated Tests (Unit & Feature 100% PASS)
 ├── docker/                   # Konfigurasi container
 │   └── postgres/init.sql     # Inisialisasi database motolens & motolens_test
 ├── docker-compose.yml        # Multi-container PostgreSQL 16 & Redis 7
-├── motolens-web/             # Frontend Next.js 16 App Router (Fase 4)
-└── motolens-android/         # Aplikasi Android Kotlin CameraX & Geotagging (Fase 5)
+├── docs/                     # Dokumentasi proyek
+│   ├── API_CONTRACT.md       # Dokumentasi Kontrak REST API /api/v1
+│   ├── ML_MODEL_CARD.md      # Model Card YOLOv8n damage detection
+│   └── PRD.md                # Spesifikasi lengkap MotoLens PRD v2.0.1
+├── frontend/                 # Frontend Next.js 16 App Router (Fase 4)
+└── ML/                       # Artefak model YOLOv8 ONNX, notebook training, dan metrik evaluasi
+    ├── evaluation/
+    │   └── metrics.json      # Ringkasan metrik eksperimen (mAP@50 84.34%)
+    ├── model_damage.onnx     # Artefak ONNX (Opset 18, input 1x3x640x640, output 1x7x8400)
+    ├── model_metadata.json   # Metadata immutable model & threshold
+    ├── MotoLens_YOLOv8_Training.ipynb # Notebook training Colab (kredensial diamankan)
+    └── yolo_infer.py         # Skrip Python inferensi mandiri
 ```
 
 ---
@@ -48,10 +56,10 @@ motolens/
 |---|---|:---:|---|
 | **Fase 0** | Audit Repository & Artefak ML | **SELESAI** | Model ONNX 12.2MB terverifikasi SHA-256 |
 | **Fase 1** | Database, Models, Seeders, 100% PostgreSQL | **SELESAI** | 15 Migrations, Seeders 58 listing Bali, 48 Test PASS |
-| **Fase 2** | Core Application (YOLO ONNX, Services, Repositories, Policies) | **SELESAI** | Skrip inferensi nyata, kalkulasi harga Bab 4, 74 Test PASS (3.721 assertions) |
-| **Fase 3** | REST API Laravel `/api/v1` (Controllers, Resources, Sanctum) | *SELANJUTNYA* | Menunggu eksekusi |
-| **Fase 4** | Frontend Next.js 16 App Router | *TERENCANA* | Persiapan modul `motolens-web/` |
-| **Fase 5** | Android Kotlin CameraX Scanner | *TERENCANA* | Persiapan modul `motolens-android/` |
+| **Fase 2** | Core Application (YOLO ONNX, Services, Repositories, Policies) | **SELESAI** | Skrip inferensi nyata, kalkulasi harga Bab 4, 74 Test PASS |
+| **Fase 3** | REST API Laravel `/api/v1` (Controllers, Resources, Sanctum, Notifications) | **SELESAI** | Endpoints lengkap, OpenAPI 3.0, 118 Test PASS (3.974 assertions) |
+| **Fase 4** | Frontend Next.js 16 App Router | *SELANJUTNYA* | Persiapan modul `frontend/` |
+| **Fase 5** | Android Kotlin CameraX Scanner | *TERENCANA* | Persiapan modul `Android-App/` |
 
 ---
 

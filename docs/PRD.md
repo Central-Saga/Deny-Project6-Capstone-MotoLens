@@ -1576,7 +1576,7 @@ motolens/
     docs/
       openapi.yaml
 
-  motolens-web/
+  frontend/
     src/
       app/
       components/
@@ -1585,11 +1585,11 @@ motolens/
       types/
       utils/
 
-  motolens-android/
+  Android-App/
     app/
       src/main/
 
-  05-model/
+  ML/
     MotoLens_YOLOv8_Training.ipynb
     model_damage.onnx
     model_metadata.json

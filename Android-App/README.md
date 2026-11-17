@@ -1,4 +1,4 @@
-# MotoLens Android Application
+# MotoLens Android Application (`Android-App/`)
 
 Aplikasi Android native sebagai alat inspeksi lapangan dan publikasi iklan motor bekas MotoLens.
 
@@ -9,6 +9,17 @@ Aplikasi Android native sebagai alat inspeksi lapangan dan publikasi iklan motor
 - **Lokasi & Geotagging:** Google Play Services Location API (perekaman latitude, longitude, dan accuracy radius dengan izin eksplisit)
 - **Networking:** Retrofit2 / OkHttp3 (multipart upload ke endpoint `/api/v1/motorcycles/inspect`)
 - **Penyimpanan Kredensial:** Android Keystore / EncryptedSharedPreferences
+
+## Struktur Direktori Monorepo Terkait
+```text
+Android-App/
+└── app/
+    └── src/
+        ├── main/
+        │   ├── java/com/motolens/app/
+        │   └── res/
+        └── test/
+```
 
 ## Lingkup Fitur (Fase 5)
 1. **Autentikasi & Pengaturan Base URL:** Login Sanctum token dan konfigurasi host API backend untuk development/demo.
