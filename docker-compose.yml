@@ -32,6 +32,56 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: motolens-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=MotoLens
+      - APP_ENV=local
+      - APP_KEY=base64:EKYzZSCzoH8FmECyX7lF9xnEANhBbj/eQIbbLKv2UWo=
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=motolens
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_STORE=redis
+      - ML_PYTHON_BINARY=/opt/venv/bin/python
+      - ML_MODEL_PATH=/var/www/html/storage/app/ml/model_damage.onnx
+      - ML_MODEL_SHA256=22ec0d55bdb32939ae8ca5cd4bb1207ab8576f4775f8c5e32359ceb81ab49edd
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    container_name: motolens-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - backend
+
 volumes:
   motolens_pgdata:
   motolens_redisdata:
