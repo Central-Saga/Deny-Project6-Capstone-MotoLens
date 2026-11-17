@@ -29,7 +29,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAdmin, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const currentTab = searchParams.get('tab') || 'overview';
@@ -86,7 +86,6 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
     router.push('/login');
   };
 
-  // Determine active title
   const getActiveTitle = () => {
     if (isTambahPage) return 'Jual & Terbitkan Listing Motor Baru';
     switch (currentTab) {
@@ -112,16 +111,16 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
       {/* ============================================================== */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 z-40 bg-white border-r border-slate-200">
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-200 transition-transform group-hover:scale-105">
-              <Sparkles className="w-5 h-5" />
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 bg-zinc-950 text-white">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-md shadow-red-600/30 transition-transform group-hover:scale-105">
+              <Bike className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight text-slate-900 block leading-none">
-                Moto<span className="text-indigo-600">Lens</span>
+              <span className="text-lg font-black tracking-tight text-white block leading-none">
+                MOTO<span className="text-red-500">LENS</span>
               </span>
-              <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">
+              <span className="text-[10px] font-bold text-zinc-400 tracking-wider uppercase">
                 Garasi Member
               </span>
             </div>
@@ -129,8 +128,8 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
         </div>
 
         {/* User Card Mini in Sidebar */}
-        <div className="px-4 py-3 mx-3 mt-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center text-xs shrink-0">
+        <div className="px-4 py-3 mx-3 mt-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-red-100 text-red-700 font-extrabold flex items-center justify-center text-xs shrink-0">
             {user?.name ? user.name.slice(0, 2).toUpperCase() : 'U'}
           </div>
           <div className="min-w-0 flex-1">
@@ -154,10 +153,10 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                   item.isActive
                     ? item.highlight
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                      : 'bg-indigo-50 text-indigo-700 font-extrabold'
+                      ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                      : 'bg-red-50 text-red-700 font-extrabold'
                     : item.highlight
-                    ? 'text-indigo-600 hover:bg-indigo-50/70'
+                    ? 'text-red-600 hover:bg-red-50/70'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
               >
@@ -166,9 +165,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                     item.isActive
                       ? item.highlight
                         ? 'text-white'
-                        : 'text-indigo-600'
+                        : 'text-red-600'
                       : item.highlight
-                      ? 'text-indigo-600'
+                      ? 'text-red-600'
                       : 'text-slate-400'
                   }`}
                 />
@@ -184,9 +183,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
               </span>
               <Link
                 href="/admin"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-zinc-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition"
               >
-                <ShieldCheck className="w-4 h-4 shrink-0 text-rose-500" />
+                <ShieldCheck className="w-4 h-4 shrink-0 text-amber-600" />
                 <span>Admin Backoffice</span>
               </Link>
             </div>
@@ -197,7 +196,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
         <div className="p-3 border-t border-slate-100 space-y-1 bg-slate-50/50">
           <Link
             href="/"
-            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition"
+            className="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-red-600 hover:bg-slate-100 transition"
           >
             <Compass className="w-4 h-4 text-slate-400" />
             <span>Lihat Katalog Publik</span>
@@ -205,9 +204,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
 
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition"
           >
-            <LogOut className="w-4 h-4 text-rose-500" />
+            <LogOut className="w-4 h-4 text-red-500" />
             <span>Keluar (Logout)</span>
           </button>
         </div>
@@ -218,24 +217,24 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
       {/* ============================================================== */}
       {mobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-zinc-950/70 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          {/* Drawer Content */}
           <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-2xl">
-            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-zinc-800 bg-zinc-950 text-white">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-                  <Sparkles className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white">
+                  <Bike className="w-4 h-4" />
                 </div>
-                <span className="font-black text-slate-900">MotoLens</span>
+                <span className="font-black text-white">
+                  MOTO<span className="text-red-500">LENS</span>
+                </span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -260,7 +259,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                     onClick={() => setMobileMenuOpen(false)}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition ${
                       item.isActive
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-red-600 text-white'
                         : 'text-slate-700 hover:bg-slate-100'
                     }`}
                   >
@@ -275,9 +274,9 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
                   <Link
                     href="/admin"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold text-amber-800 bg-amber-50"
                   >
-                    <ShieldCheck className="w-4 h-4 text-rose-500" />
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
                     <span>Admin Backoffice</span>
                   </Link>
                 </div>
@@ -295,7 +294,7 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-red-600"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Keluar (Logout)</span>
@@ -309,10 +308,8 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
       {/* MAIN CONTENT AREA & TOP HEADER                                 */}
       {/* ============================================================== */}
       <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
-        {/* Top Header */}
-        <header className="sticky top-0 z-30 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between gap-4">
+        <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Hamburger on Mobile */}
             <button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 focus:outline-none"
@@ -331,21 +328,20 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
             </div>
           </div>
 
-          {/* Right Header: Notifications & User Profile */}
           <div className="flex items-center gap-3">
             <NotificationDropdown theme="light" />
 
             <div className="h-6 w-px bg-slate-200" />
 
             <div className="flex items-center gap-2.5 pl-1">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white font-extrabold flex items-center justify-center text-xs shadow-sm">
+              <div className="w-8 h-8 rounded-full bg-red-600 text-white font-extrabold flex items-center justify-center text-xs shadow-sm">
                 {user?.name ? user.name.slice(0, 1).toUpperCase() : <UserIcon className="w-4 h-4" />}
               </div>
               <div className="hidden md:block text-left">
                 <span className="block text-xs font-bold text-slate-800 leading-tight">
                   {user?.name || 'Member'}
                 </span>
-                <span className="block text-[10px] text-slate-500 leading-none">
+                <span className="block text-[10px] text-red-600 font-bold uppercase leading-none">
                   {isAdmin ? 'Admin & Member' : 'Member Terdaftar'}
                 </span>
               </div>
@@ -353,7 +349,6 @@ export function UserDashboardLayout({ children }: UserDashboardLayoutProps) {
           </div>
         </header>
 
-        {/* Dashboard Content */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}
         </main>
