@@ -5,16 +5,21 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Activity,
+  AlertOctagon,
   BarChart3,
   Check,
+  CheckCircle2,
   Cpu,
   Database,
+  ExternalLink,
+  FileText,
   Flag,
   Loader2,
   MessageSquareWarning,
   Plus,
   Shield,
   ShieldAlert,
+  ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react';
@@ -38,20 +43,16 @@ import { ApiClientError } from '@/services/apiClient';
 import { useAuth } from '@/hooks/useAuth';
 import { PriceBadge } from '@/components/shared/PriceBadge';
 import { formatCurrency, formatDateTimeWita } from '@/utils/formatters';
-
-type AdminTab =
-  | 'overview'
-  | 'moderation'
-  | 'models'
-  | 'metrics'
-  | 'reports_feedback'
-  | 'logs';
+import {
+  AdminDashboardLayout,
+  type AdminActiveTab,
+} from '@/components/admin/AdminDashboardLayout';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
   const { isAuthenticated, isAdmin, isLoading: authLoading } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [activeTab, setActiveTab] = useState<AdminActiveTab>('overview');
   const [loading, setLoading] = useState<boolean>(true);
   const [banner, setBanner] = useState<{
     type: 'success' | 'error';
@@ -247,10 +248,10 @@ export default function AdminDashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6">
-        <Loader2 className="w-9 h-9 text-indigo-600 animate-spin mb-2" />
-        <p className="text-xs font-semibold text-slate-600">
-          Memuat Dashboard Admin & Analitik Pasar MotoLens...
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-slate-100">
+        <Loader2 className="w-10 h-10 text-rose-500 animate-spin mb-3" />
+        <p className="text-xs font-bold text-slate-400 tracking-wide uppercase">
+          Menyiapkan Konsol Admin & Metrik MotoLens...
         </p>
       </div>
     );
@@ -258,26 +259,33 @@ export default function AdminDashboardPage() {
 
   if (!isAdmin) {
     return (
-      <div className="max-w-lg mx-auto my-16 px-4">
-        <div className="bg-white rounded-3xl border border-rose-200 p-8 text-center space-y-4 shadow-xs">
-          <ShieldAlert className="w-12 h-12 text-rose-600 mx-auto" />
-          <h1 className="text-xl font-extrabold text-slate-900">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+        <div className="bg-slate-900 rounded-3xl border border-rose-900/60 p-8 text-center space-y-4 max-w-md shadow-2xl text-slate-100">
+          <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto" />
+          <h1 className="text-xl font-extrabold text-white">
             HTTP 403 — Akses Terbatas Administrator
           </h1>
-          <p className="text-xs text-slate-600">
+          <p className="text-xs text-slate-400 leading-relaxed">
             Halaman ini dilindungi oleh Spatie Role <code>admin</code>. Silakan
-            masuk menggunakan akun Administrator untuk mengakses panel moderasi.
+            masuk menggunakan akun Administrator resmi untuk mengakses panel kontrol.
           </p>
           <Link
             href="/"
-            className="inline-block px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold"
+            className="inline-block px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition"
           >
-            Kembali ke Katalog Utama
+            Kembali ke Katalog Publik
           </Link>
         </div>
       </div>
     );
   }
+
+  const pendingModerationCount = motorcycles.filter(
+    (m) => m.moderation_status === 'pending'
+  ).length;
+  const pendingReportsCount = reports.filter(
+    (r) => r.status === 'open'
+  ).length;
 
   const dist = dashboard?.price_label_distribution;
   const goodDealCount = dist?.good_deal ?? 0;
@@ -289,493 +297,627 @@ export default function AdminDashboardPage() {
   );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Header */}
-      <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-bold">
-            <Shield className="w-3.5 h-3.5" />
-            <span>Spatie Role: Admin Terverifikasi</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold">
-            MotoLens Admin Command Center
-          </h1>
-          <p className="text-xs text-slate-400">
-            Moderasi listing, master harga referensi, pemantauan metrik ONNX,
-            review feedback AI, dan audit log.
-          </p>
-        </div>
-      </div>
-
-      {banner && (
-        <div
-          className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-semibold ${
-            banner.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-              : 'bg-rose-50 border-rose-200 text-rose-900'
-          }`}
-        >
-          <span>{banner.text}</span>
-          <button type="button" onClick={() => setBanner(null)}>
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
-      {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
-        {[
-          { id: 'overview', label: 'Analitik Pasar', icon: BarChart3 },
-          {
-            id: 'moderation',
-            label: `Moderasi Listing (${dashboard?.overview.pending_moderation ?? 0} Pending)`,
-            icon: Shield,
-          },
-          {
-            id: 'models',
-            label: `Master Model (${models.length})`,
-            icon: Database,
-          },
-          { id: 'metrics', label: 'Metrik ONNX AI', icon: Cpu },
-          {
-            id: 'reports_feedback',
-            label: `Laporan & Feedback AI (${reports.length + feedbacks.length})`,
-            icon: Flag,
-          },
-          { id: 'logs', label: 'Audit Activity Logs', icon: Activity },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition ${
-                activeTab === tab.id
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-              }`}
-            >
-              <Icon className="w-4 h-4" />
-              <span>{tab.label}</span>
+    <AdminDashboardLayout
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      pendingModerationCount={pendingModerationCount}
+      pendingReportsCount={pendingReportsCount}
+    >
+      <div className="space-y-6">
+        {/* Banner Notifikasi Aksi Admin */}
+        {banner && (
+          <div
+            className={`p-4 rounded-2xl border flex items-center justify-between text-xs font-semibold ${
+              banner.type === 'success'
+                ? 'bg-emerald-950/60 border-emerald-800 text-emerald-200'
+                : 'bg-rose-950/60 border-rose-800 text-rose-200'
+            }`}
+          >
+            <span>{banner.text}</span>
+            <button type="button" onClick={() => setBanner(null)}>
+              <X className="w-4 h-4 text-slate-400 hover:text-white" />
             </button>
-          );
-        })}
-      </div>
-
-      {/* Tab 1: Overview & Market Analytics */}
-      {activeTab === 'overview' && dashboard && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <p className="text-xs text-slate-500">Total Listing Katalog</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">
-                {dashboard.overview.total_listings}
-              </p>
-              <p className="text-[11px] text-emerald-600 font-semibold mt-1">
-                {dashboard.overview.approved_listings} Approved •{' '}
-                {dashboard.overview.pending_moderation} Pending
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <p className="text-xs text-slate-500">Nilai Katalog Approved</p>
-              <p className="text-xl font-extrabold text-indigo-600 mt-1">
-                {formatCurrency(dashboard.overview.total_catalog_value)}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Akumulasi harga pasar Bali
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <p className="text-xs text-slate-500">Total Inspeksi YOLOv8</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">
-                {dashboard.overview.total_inspections}
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Scratch: {dashboard.damage_detection_stats.total_scratches} •
-                Dent: {dashboard.damage_detection_stats.total_dents}
-              </p>
-            </div>
-
-            <div className="bg-white rounded-2xl border border-slate-200 p-5">
-              <p className="text-xs text-slate-500">Jadwal Survei & Pengguna</p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">
-                {dashboard.overview.total_inquiries} Survei
-              </p>
-              <p className="text-[11px] text-slate-500 mt-1">
-                {dashboard.overview.total_users} Pengguna Terdaftar
-              </p>
-            </div>
           </div>
+        )}
 
-          {/* Price Label Distribution Bar Chart */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h2 className="text-base font-extrabold text-slate-900">
-              Distribusi Label Harga Pasar (`price_label`)
-            </h2>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <div className="flex justify-between font-bold mb-1">
-                  <span className="text-emerald-700">
-                    Good Deal (Di Bawah Estimasi AI)
-                  </span>
-                  <span>{goodDealCount} unit</span>
-                </div>
-                <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full"
-                    style={{
-                      width: `${Math.round(
-                        (goodDealCount / totalLabeled) * 100
-                      )}%`,
-                    }}
-                  />
-                </div>
+        {/* ============================================================== */}
+        {/* TAB 1: OVERVIEW & ANALITIK PASAR                               */}
+        {/* ============================================================== */}
+        {activeTab === 'overview' && dashboard && (
+          <div className="space-y-6">
+            {/* Top Stat Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 shadow-sm">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                  Total Listing
+                </span>
+                <p className="text-3xl font-black text-white">
+                  {dashboard.overview?.total_listings ?? 0}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Semua motor terdaftar di marketplace
+                </p>
               </div>
 
-              <div>
-                <div className="flex justify-between font-bold mb-1">
-                  <span className="text-sky-700">
-                    Fair Price (Sesuai Estimasi AI)
-                  </span>
-                  <span>{fairPriceCount} unit</span>
-                </div>
-                <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full bg-sky-500 rounded-full"
-                    style={{
-                      width: `${Math.round(
-                        (fairPriceCount / totalLabeled) * 100
-                      )}%`,
-                    }}
-                  />
-                </div>
+              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 shadow-sm">
+                <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+                  Perlu Moderasi
+                </span>
+                <p className="text-3xl font-black text-amber-400">
+                  {dashboard.overview?.pending_moderation ?? 0}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Antrean review motor baru
+                </p>
               </div>
 
-              <div>
-                <div className="flex justify-between font-bold mb-1">
-                  <span className="text-rose-700">
-                    Overpriced (Di Atas Estimasi AI)
-                  </span>
-                  <span>{overpricedCount} unit</span>
-                </div>
-                <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full bg-rose-500 rounded-full"
-                    style={{
-                      width: `${Math.round(
-                        (overpricedCount / totalLabeled) * 100
-                      )}%`,
-                    }}
-                  />
-                </div>
+              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 shadow-sm">
+                <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block mb-1">
+                  Total Inspeksi AI
+                </span>
+                <p className="text-3xl font-black text-emerald-400">
+                  {dashboard.overview?.total_inspections ?? 0}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Hasil pemindaian kerusakan AI
+                </p>
+              </div>
+
+              <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 shadow-sm">
+                <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
+                  Total Nilai Pasar
+                </span>
+                <p className="text-lg font-black text-white truncate">
+                  {formatCurrency(dashboard.overview?.total_catalog_value ?? 0)}
+                </p>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Akumulasi nilai listing aktif
+                </p>
               </div>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Tab 2: Listing Moderation */}
-      {activeTab === 'moderation' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-extrabold text-slate-900">
-              Antrean Moderasi Listing Motor
-            </h2>
-            <select
-              value={modFilter}
-              onChange={(e) => setModFilter(e.target.value)}
-              className="px-3.5 py-2 rounded-xl border border-slate-300 text-xs bg-white font-bold"
-            >
-              <option value="">Semua Status Moderasi</option>
-              <option value="pending">Pending Moderation</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-          </div>
+            {/* Price Distribution & Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Distribution Chart Bar */}
+              <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-4">
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-rose-500" />
+                  <span>Distribusi Price Label Pasar Bali (PRD Bab 4.8)</span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Perbandingan harga jual terhadap nilai wajar hasil prediksi ML
+                </p>
 
-          <div className="space-y-3">
-            {motorcycles.map((m) => (
-              <div
-                key={m.id}
-                className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
-              >
-                <div className="space-y-1 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full font-bold uppercase text-[10px] ${
-                        m.moderation_status === 'approved'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : m.moderation_status === 'rejected'
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-amber-100 text-amber-800'
-                      }`}
-                    >
-                      {m.moderation_status}
-                    </span>
-                    <PriceBadge label={m.price_label} size="sm" />
+                <div className="space-y-3 pt-2">
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-emerald-400">
+                        Good Deal ({goodDealCount} unit)
+                      </span>
+                      <span className="text-slate-400">
+                        {Math.round((goodDealCount / totalLabeled) * 100)}%
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-500"
+                        style={{
+                          width: `${(goodDealCount / totalLabeled) * 100}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <Link
-                    href={`/motorcycles/${m.id}`}
-                    className="block text-sm font-extrabold text-slate-900 hover:text-indigo-600 pt-1"
-                  >
-                    #{m.id} — {m.title}
-                  </Link>
-                  <p className="text-slate-600">
-                    Penjual: <strong>{m.seller?.name}</strong> • Harga:{' '}
-                    <strong>{formatCurrency(m.seller_price)}</strong> (AI:{' '}
-                    {formatCurrency(m.ml_predicted_price)})
-                  </p>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-blue-400">
+                        Fair Price ({fairPriceCount} unit)
+                      </span>
+                      <span className="text-slate-400">
+                        {Math.round((fairPriceCount / totalLabeled) * 100)}%
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-blue-500 transition-all duration-500"
+                        style={{
+                          width: `${(fairPriceCount / totalLabeled) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs font-bold mb-1">
+                      <span className="text-rose-400">
+                        Overpriced / Above Market ({overpricedCount} unit)
+                      </span>
+                      <span className="text-slate-400">
+                        {Math.round((overpricedCount / totalLabeled) * 100)}%
+                      </span>
+                    </div>
+                    <div className="h-3 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-rose-500 transition-all duration-500"
+                        style={{
+                          width: `${(overpricedCount / totalLabeled) * 100}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Moderation & Quality Overview */}
+              <div className="bg-slate-950/80 p-6 rounded-2xl border border-slate-800 space-y-4">
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Kualitas & Integritas Marketplace</span>
+                </h3>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <span className="text-xs text-slate-400 block mb-1">
+                      Listing Disetujui
+                    </span>
+                    <span className="text-2xl font-black text-emerald-400">
+                      {dashboard.overview?.approved_listings ??
+                        motorcycles.filter((m) => m.moderation_status === 'approved').length}
+                    </span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
+                    <span className="text-xs text-slate-400 block mb-1">
+                      Listing Ditolak
+                    </span>
+                    <span className="text-2xl font-black text-rose-400">
+                      {dashboard.overview?.rejected_listings ??
+                        motorcycles.filter((m) => m.moderation_status === 'rejected').length}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="pt-2">
                   <button
-                    type="button"
-                    onClick={() => handleModerate(m.id, 'approved')}
-                    className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+                    onClick={() => setActiveTab('moderation')}
+                    className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center justify-center gap-2"
                   >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleModerate(m.id, 'rejected')}
-                    className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                    <span>Reject</span>
+                    <Shield className="w-4 h-4" />
+                    <span>Buka Panel Moderasi Listing ({pendingModerationCount})</span>
                   </button>
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Tab 3: Master Reference Models CRUD */}
-      {activeTab === 'models' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-4">
-            <form
-              onSubmit={handleCreateModel}
-              className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 text-xs"
-            >
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-indigo-600" />
+        {/* ============================================================== */}
+        {/* TAB 2: MODERASI LISTING MOTOR                                  */}
+        {/* ============================================================== */}
+        {activeTab === 'moderation' && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+              <div>
+                <h2 className="text-sm font-extrabold text-white">
+                  Daftar Pengajuan Listing Motor ({motorcycles.length})
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Tinjau data unit, kepatuhan harga, dan hasil deteksi baret/penyok sebelum terbit
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModFilter('')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    modFilter === ''
+                      ? 'bg-rose-600 text-white'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  Semua
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModFilter('pending')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    modFilter === 'pending'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  Pending ({pendingModerationCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModFilter('approved')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    modFilter === 'approved'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  Disetujui
+                </button>
+              </div>
+            </div>
+
+            {motorcycles.length === 0 ? (
+              <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-8 text-center text-xs text-slate-400">
+                Tidak ada listing pada filter ini.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {motorcycles.map((unit) => (
+                  <div
+                    key={unit.id}
+                    className="bg-slate-950/80 rounded-2xl border border-slate-800 p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  >
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-black text-white">
+                          #{unit.id} — {unit.title}
+                        </span>
+                        <PriceBadge label={unit.price_label} />
+                        <span
+                          className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                            unit.moderation_status === 'approved'
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              : unit.moderation_status === 'pending'
+                              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                              : 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                          }`}
+                        >
+                          {unit.moderation_status}
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-slate-400 flex flex-wrap gap-x-4 gap-y-1">
+                        <span>
+                          Penjual: <strong className="text-slate-200">{unit.seller?.name || 'User'}</strong>
+                        </span>
+                        <span>
+                          Harga Penjual: <strong className="text-rose-400">{formatCurrency(unit.seller_price)}</strong>
+                        </span>
+                        <span>
+                          Prediksi AI: <strong className="text-indigo-400">{formatCurrency(unit.ml_predicted_price || 0)}</strong>
+                        </span>
+                        <span>
+                          Tahun: <strong className="text-slate-200">{unit.year}</strong>
+                        </span>
+                        <span>
+                          Odometer: <strong className="text-slate-200">{(unit.odometer_km || 0).toLocaleString('id-ID')} km</strong>
+                        </span>
+                      </div>
+
+                      {(unit as unknown as { rejection_reason?: string }).rejection_reason && (
+                        <p className="text-[11px] text-rose-400 bg-rose-950/40 p-2 rounded-lg border border-rose-900/50">
+                          Alasan Ditolak: {(unit as unknown as { rejection_reason?: string }).rejection_reason}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Link
+                        href={`/motorcycles/${unit.id}`}
+                        target="_blank"
+                        className="px-3 py-2 rounded-xl text-xs font-bold text-slate-300 bg-slate-900 hover:bg-slate-800 border border-slate-700 transition flex items-center gap-1.5"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Pratinjau</span>
+                      </Link>
+
+                      {unit.moderation_status !== 'approved' && (
+                        <button
+                          type="button"
+                          onClick={() => handleModerate(unit.id, 'approved')}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition flex items-center gap-1"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Setujui</span>
+                        </button>
+                      )}
+
+                      {unit.moderation_status !== 'rejected' && (
+                        <button
+                          type="button"
+                          onClick={() => handleModerate(unit.id, 'rejected')}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-400 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800 transition flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Tolak</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 3: MASTER REFERENSI HARGA (CRUD)                           */}
+        {/* ============================================================== */}
+        {activeTab === 'models' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Form Tambah Model */}
+            <div className="lg:col-span-4 bg-slate-950/80 p-5 rounded-2xl border border-slate-800 space-y-4">
+              <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <Plus className="w-4 h-4 text-rose-500" />
                 <span>Tambah Model Referensi Baru</span>
               </h3>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Merek
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newBrand}
-                  onChange={(e) => setNewBrand(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Nama Model
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newModelName}
-                  onChange={(e) => setNewModelName(e.target.value)}
-                  placeholder="Contoh: Stylo 160 ABS"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
+              <form onSubmit={handleCreateModel} className="space-y-3 text-xs">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Kapasitas (cc)
+                  <label className="block font-bold text-slate-300 mb-1">
+                    Merek Motor
+                  </label>
+                  <select
+                    value={newBrand}
+                    onChange={(e) => setNewBrand(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200"
+                  >
+                    <option value="Honda">Honda</option>
+                    <option value="Yamaha">Yamaha</option>
+                    <option value="Suzuki">Suzuki</option>
+                    <option value="Kawasaki">Kawasaki</option>
+                    <option value="Vespa">Vespa</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">
+                    Nama Model
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Vario 160 CBS"
+                    value={newModelName}
+                    onChange={(e) => setNewModelName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 placeholder-slate-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1">
+                      Kapasitas (cc)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      value={newCc}
+                      onChange={(e) => setNewCc(Number(e.target.value))}
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1">
+                      Kategori
+                    </label>
+                    <select
+                      value={newCategory}
+                      onChange={(e) =>
+                        setNewCategory(e.target.value as MotorcycleCategory)
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200"
+                    >
+                      <option value="matic">Matic</option>
+                      <option value="sport">Sport</option>
+                      <option value="bebek">Bebek</option>
+                      <option value="klasik">Klasik</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">
+                    Harga Standar Pasar (Rp)
                   </label>
                   <input
                     type="number"
                     required
-                    value={newCc}
-                    onChange={(e) => setNewCc(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300"
+                    min={1000000}
+                    value={newStdPrice}
+                    onChange={(e) => setNewStdPrice(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-200"
                   />
                 </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">
-                    Kategori
-                  </label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) =>
-                      setNewCategory(e.target.value as MotorcycleCategory)
-                    }
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white"
-                  >
-                    <option value="matic">Matic</option>
-                    <option value="sport">Sport</option>
-                    <option value="bebek">Bebek</option>
-                    <option value="klasik">Klasik</option>
-                  </select>
-                </div>
+
+                <button
+                  type="submit"
+                  disabled={creatingModel}
+                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition disabled:opacity-50"
+                >
+                  {creatingModel ? 'Menyimpan...' : 'Simpan Model Referensi'}
+                </button>
+              </form>
+            </div>
+
+            {/* Tabel Model Referensi */}
+            <div className="lg:col-span-8 bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden">
+              <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Daftar Master Model ({models.length})
+                </span>
               </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Harga Standar Pasar (Rp)
-                </label>
-                <input
-                  type="number"
-                  required
-                  min={1000000}
-                  value={newStdPrice}
-                  onChange={(e) => setNewStdPrice(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={creatingModel}
-                className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
-              >
-                {creatingModel ? 'Menyimpan...' : 'Simpan Model Referensi'}
-              </button>
-            </form>
-          </div>
-
-          <div className="lg:col-span-8 bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                  <tr>
-                    <th className="p-3.5 font-bold">Merek & Model</th>
-                    <th className="p-3.5 font-bold">Kategori / CC</th>
-                    <th className="p-3.5 font-bold">Harga Standar</th>
-                    <th className="p-3.5 font-bold text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {models.map((mod) => (
-                    <tr key={mod.id} className="hover:bg-slate-50/70">
-                      <td className="p-3.5 font-bold text-slate-900">
-                        {mod.brand} {mod.model_name}
-                      </td>
-                      <td className="p-3.5 text-slate-600 uppercase">
-                        {mod.category} • {mod.engine_cc}cc
-                      </td>
-                      <td className="p-3.5 font-bold text-indigo-700">
-                        {formatCurrency(mod.standard_price)}
-                      </td>
-                      <td className="p-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteModel(mod.id)}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50"
-                          title="Nonaktifkan / Hapus Model"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
+                    <tr>
+                      <th className="p-3.5 font-bold">Merek & Model</th>
+                      <th className="p-3.5 font-bold">Kategori / CC</th>
+                      <th className="p-3.5 font-bold">Harga Standar</th>
+                      <th className="p-3.5 font-bold text-right">Aksi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {models.map((mod) => (
+                      <tr key={mod.id} className="hover:bg-slate-900/40">
+                        <td className="p-3.5 font-bold text-white">
+                          {mod.brand} {mod.model_name}
+                        </td>
+                        <td className="p-3.5 text-slate-400 uppercase">
+                          {mod.category} • {mod.engine_cc}cc
+                        </td>
+                        <td className="p-3.5 font-bold text-rose-400">
+                          {formatCurrency(mod.standard_price)}
+                        </td>
+                        <td className="p-3.5 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteModel(mod.id)}
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-950/50 transition"
+                            title="Nonaktifkan / Hapus Model"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Tab 4: ONNX Inference Metrics */}
-      {activeTab === 'metrics' && metrics && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
-            <p className="text-xs font-bold uppercase text-indigo-600">
-              Kecepatan Inferensi ONNX (`inference_time_ms`)
-            </p>
-            <p className="text-3xl font-extrabold text-slate-900">
-              {metrics.inference_time_ms.average} ms
-            </p>
-            <p className="text-xs text-slate-500">
-              Min: {metrics.inference_time_ms.min} ms • Max:{' '}
-              {metrics.inference_time_ms.max} ms
-            </p>
+        {/* ============================================================== */}
+        {/* TAB 4: METRIK & KESEHATAN MODEL ONNX                           */}
+        {/* ============================================================== */}
+        {activeTab === 'metrics' && metrics && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-6 space-y-2">
+                <p className="text-xs font-bold uppercase text-indigo-400">
+                  Kecepatan Inferensi ONNX (`inference_time_ms`)
+                </p>
+                <p className="text-3xl font-extrabold text-white">
+                  {metrics.inference_time_ms.average} ms
+                </p>
+                <p className="text-xs text-slate-400">
+                  Min: {metrics.inference_time_ms.min} ms • Max:{' '}
+                  {metrics.inference_time_ms.max} ms
+                </p>
+              </div>
+
+              <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-6 space-y-2">
+                <p className="text-xs font-bold uppercase text-emerald-400">
+                  Rata-Rata Confidence Deteksi
+                </p>
+                <p className="text-3xl font-extrabold text-white">
+                  {Math.round((metrics.accuracy_metrics.average_confidence || 0) * 100)}%
+                </p>
+                <p className="text-xs text-slate-400">
+                  Completed: {metrics.completed_inspections} • Failed:{' '}
+                  {metrics.failed_inspections}
+                </p>
+              </div>
+
+              <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-6 space-y-2">
+                <p className="text-xs font-bold uppercase text-amber-400">
+                  Total Bounding Box Terdeteksi
+                </p>
+                <p className="text-3xl font-extrabold text-white">
+                  {metrics.accuracy_metrics.detections_by_class.total} BBox
+                </p>
+                <p className="text-xs text-slate-400">
+                  Scratch: {metrics.accuracy_metrics.detections_by_class.scratch} •
+                  Dent: {metrics.accuracy_metrics.detections_by_class.dent} •
+                  Accident: {metrics.accuracy_metrics.detections_by_class.accident}
+                </p>
+              </div>
+            </div>
+
+            {/* Spesifikasi Model ONNX Card */}
+            <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-6 space-y-3">
+              <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-indigo-400" />
+                <span>Spesifikasi Pipeline Inferensi YOLOv8 ONNX</span>
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs pt-2">
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-slate-500 block mb-1">Model Architecture</span>
+                  <span className="font-bold text-white">YOLOv8 Nano (12.7 MB)</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-slate-500 block mb-1">Inference Engine</span>
+                  <span className="font-bold text-white">ONNX Runtime (CPU)</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-slate-500 block mb-1">Input Resolution</span>
+                  <span className="font-bold text-white">640x640 px</span>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                  <span className="text-slate-500 block mb-1">Confidence Threshold</span>
+                  <span className="font-bold text-white">0.25 (NMS 0.45)</span>
+                </div>
+              </div>
+            </div>
           </div>
+        )}
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
-            <p className="text-xs font-bold uppercase text-emerald-600">
-              Rata-Rata Confidence Deteksi
-            </p>
-            <p className="text-3xl font-extrabold text-slate-900">
-              {Math.round((metrics.accuracy_metrics.average_confidence || 0) * 100)}%
-            </p>
-            <p className="text-xs text-slate-500">
-              Completed: {metrics.completed_inspections} • Failed:{' '}
-              {metrics.failed_inspections}
-            </p>
-          </div>
+        {/* ============================================================== */}
+        {/* TAB 5: LAPORAN LISTING MENCURIGAKAN (REPORTS)                  */}
+        {/* ============================================================== */}
+        {activeTab === 'reports' && (
+          <div className="space-y-4">
+            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <Flag className="w-4 h-4 text-rose-500" />
+                  <span>Laporan Listing Mencurigakan ({reports.length})</span>
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Laporan dari calon pembeli terkait indikasi penipuan, data palsu, atau foto manipulasi
+                </p>
+              </div>
+            </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-2">
-            <p className="text-xs font-bold uppercase text-amber-600">
-              Distribusi Deteksi Kelas YOLOv8
-            </p>
-            <p className="text-3xl font-extrabold text-slate-900">
-              {metrics.accuracy_metrics.detections_by_class.total} BBox
-            </p>
-            <p className="text-xs text-slate-600">
-              Scratch: {metrics.accuracy_metrics.detections_by_class.scratch} •
-              Dent: {metrics.accuracy_metrics.detections_by_class.dent} •
-              Accident: {metrics.accuracy_metrics.detections_by_class.accident}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Tab 5: Reports & Inspection Feedbacks */}
-      {activeTab === 'reports_feedback' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Reports Column */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <Flag className="w-4 h-4 text-rose-600" />
-              <span>Laporan Listing Mencurigakan ({reports.length})</span>
-            </h3>
-            <div className="space-y-3 text-xs">
-              {reports.length === 0 ? (
-                <p className="text-slate-500 py-4">Belum ada laporan masuk.</p>
-              ) : (
-                reports.map((rep) => (
+            {reports.length === 0 ? (
+              <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-8 text-center text-xs text-slate-400">
+                Belum ada laporan listing yang masuk.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {reports.map((rep) => (
                   <div
                     key={rep.id}
-                    className="p-3.5 rounded-xl border border-slate-200 space-y-2"
+                    className="bg-slate-950/80 rounded-2xl border border-slate-800 p-5 space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-rose-700 uppercase">
+                      <span className="font-black text-rose-400 uppercase text-xs">
                         {rep.reason}
                       </span>
-                      <span className="px-2 py-0.5 rounded bg-slate-100 font-bold uppercase text-[10px]">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                          rep.status === 'open'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                            : rep.status === 'resolved'
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-slate-800 text-slate-300'
+                        }`}
+                      >
                         {rep.status}
                       </span>
                     </div>
-                    <p className="font-bold text-slate-900">
+
+                    <p className="text-xs font-bold text-white">
                       Unit: {rep.motorcycle?.title || `#${rep.motorcycle_id}`}
                     </p>
-                    <p className="text-slate-600">{rep.description}</p>
-                    <div className="flex items-center gap-2 pt-1">
+                    <p className="text-xs text-slate-400 bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                      &quot;{rep.description}&quot;
+                    </p>
+
+                    <div className="flex items-center gap-2 pt-1 flex-wrap">
                       {(['reviewing', 'resolved', 'dismissed'] as ReportStatus[]).map(
                         (st) => (
                           <button
                             key={st}
                             type="button"
                             onClick={() => handleUpdateReportStatus(rep.id, st)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-600 hover:text-white text-[11px] font-bold capitalize transition"
+                            className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-rose-600 hover:text-white text-[11px] font-bold capitalize transition border border-slate-700"
                           >
                             Set {st}
                           </button>
@@ -783,105 +925,135 @@ export default function AdminDashboardPage() {
                       )}
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
+        )}
 
-          {/* Feedbacks Column */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
-            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-              <MessageSquareWarning className="w-4 h-4 text-indigo-600" />
-              <span>Review Feedback Deteksi AI ({feedbacks.length})</span>
-            </h3>
-            <div className="space-y-3 text-xs">
-              {feedbacks.length === 0 ? (
-                <p className="text-slate-500 py-4">
-                  Belum ada feedback deteksi AI dari pengguna.
+        {/* ============================================================== */}
+        {/* TAB 6: REVIEW FEEDBACK DETEKSI AI                              */}
+        {/* ============================================================== */}
+        {activeTab === 'feedbacks' && (
+          <div className="space-y-4">
+            <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <MessageSquareWarning className="w-4 h-4 text-indigo-400" />
+                  <span>Review Feedback Deteksi Kerusakan AI ({feedbacks.length})</span>
+                </h2>
+                <p className="text-xs text-slate-400">
+                  Umpan balik dari pengguna (false positive / missed detection) untuk continuous improvement dataset YOLOv8
                 </p>
-              ) : (
-                feedbacks.map((fb) => (
+              </div>
+            </div>
+
+            {feedbacks.length === 0 ? (
+              <div className="bg-slate-950/80 rounded-2xl border border-slate-800 p-8 text-center text-xs text-slate-400">
+                Belum ada feedback hasil deteksi AI dari pengguna.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {feedbacks.map((fb) => (
                   <div
                     key={fb.id}
-                    className="p-3.5 rounded-xl border border-slate-200 space-y-2"
+                    className="bg-slate-950/80 rounded-2xl border border-slate-800 p-5 space-y-3"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-indigo-700 uppercase">
+                      <span className="font-black text-indigo-400 uppercase text-xs">
                         {fb.feedback_type}
                       </span>
-                      <span className="px-2 py-0.5 rounded bg-slate-100 font-bold uppercase text-[10px]">
+                      <span
+                        className={`px-2 py-0.5 rounded text-[10px] font-black uppercase ${
+                          fb.review_status === 'pending'
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : fb.review_status === 'accepted'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-rose-500/20 text-rose-300'
+                        }`}
+                      >
                         {fb.review_status}
                       </span>
                     </div>
-                    <p className="text-slate-700">{fb.comment}</p>
-                    <p className="text-[11px] text-slate-500">
-                      Oleh: {fb.submitter?.name} • Inspeksi #{fb.inspection_id}
+
+                    <p className="text-xs text-slate-300 bg-slate-900 p-2.5 rounded-xl border border-slate-800">
+                      {fb.comment}
                     </p>
+
+                    <p className="text-[11px] text-slate-500">
+                      Oleh: <strong className="text-slate-400">{fb.submitter?.name}</strong> • ID Inspeksi #{fb.inspection_id}
+                    </p>
+
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         type="button"
-                        onClick={() =>
-                          handleUpdateFeedbackStatus(fb.id, 'accepted')
-                        }
-                        className="px-3 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-bold"
+                        onClick={() => handleUpdateFeedbackStatus(fb.id, 'accepted')}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition"
                       >
-                        Accept (Valid)
+                        Accept (Valid Ground Truth)
                       </button>
                       <button
                         type="button"
-                        onClick={() =>
-                          handleUpdateFeedbackStatus(fb.id, 'rejected')
-                        }
-                        className="px-3 py-1 rounded-lg bg-rose-600 text-white text-[11px] font-bold"
+                        onClick={() => handleUpdateFeedbackStatus(fb.id, 'rejected')}
+                        className="px-3 py-1.5 rounded-lg bg-rose-950/50 hover:bg-rose-900 border border-rose-800 text-rose-300 text-[11px] font-bold transition"
                       >
                         Reject
                       </button>
                     </div>
                   </div>
-                ))
-              )}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* TAB 7: AUDIT LOG AKTIVITAS                                     */}
+        {/* ============================================================== */}
+        {activeTab === 'logs' && (
+          <div className="bg-slate-950/80 rounded-2xl border border-slate-800 overflow-hidden">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Spatie Activity Log ({logs.length})
+                </h3>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-900 border-b border-slate-800 text-slate-400">
+                  <tr>
+                    <th className="p-3.5 font-bold">Waktu (WITA)</th>
+                    <th className="p-3.5 font-bold">Kategori Log</th>
+                    <th className="p-3.5 font-bold">Deskripsi Aktivitas</th>
+                    <th className="p-3.5 font-bold">Aktor</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {logs.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-900/40">
+                      <td className="p-3.5 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                        {formatDateTimeWita(log.created_at)}
+                      </td>
+                      <td className="p-3.5 whitespace-nowrap">
+                        <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-indigo-400 font-bold">
+                          {log.log_name}
+                        </span>
+                      </td>
+                      <td className="p-3.5 font-semibold text-white">
+                        {log.description}
+                      </td>
+                      <td className="p-3.5 text-slate-400 whitespace-nowrap">
+                        {log.causer?.name || 'System'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Tab 6: Activity Logs */}
-      {activeTab === 'logs' && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                <tr>
-                  <th className="p-3.5 font-bold">ID & Waktu (WITA)</th>
-                  <th className="p-3.5 font-bold">Kategori Log</th>
-                  <th className="p-3.5 font-bold">Deskripsi Aktivitas</th>
-                  <th className="p-3.5 font-bold">Aktor (Causer)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-50/70">
-                    <td className="p-3.5 font-mono text-[11px] text-slate-500">
-                      #{log.id} • {formatDateTimeWita(log.created_at)}
-                    </td>
-                    <td className="p-3.5">
-                      <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-bold">
-                        {log.log_name}
-                      </span>
-                    </td>
-                    <td className="p-3.5 font-semibold text-slate-900">
-                      {log.description}
-                    </td>
-                    <td className="p-3.5 text-slate-600">
-                      {log.causer?.name || 'System'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </AdminDashboardLayout>
   );
 }

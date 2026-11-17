@@ -2,10 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AuthProvider } from '@/hooks/useAuth';
 import { CompareProvider } from '@/hooks/useCompare';
-import { Navbar } from '@/components/shared/Navbar';
-import { Footer } from '@/components/shared/Footer';
-import { MobileBottomNav } from '@/components/shared/MobileBottomNav';
-import { FloatingCompareBar } from '@/components/shared/FloatingCompareBar';
+import { AppShell } from '@/components/shared/AppShell';
 
 export const metadata: Metadata = {
   title: 'MotoLens — AI Used Motorcycle Marketplace & Inspection Bali',
@@ -20,14 +17,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <body className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+      <body className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased">
         <AuthProvider>
           <CompareProvider>
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <FloatingCompareBar />
-            <Footer />
-            <MobileBottomNav />
+            <AppShell>{children}</AppShell>
           </CompareProvider>
         </AuthProvider>
       </body>
