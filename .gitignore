@@ -45,6 +45,8 @@ build/
 frontend/.next/
 frontend/out/
 frontend/build/
+frontend/next-env.d.ts
+*.tsbuildinfo
 
 # Android build
 Android-App/.gradle/

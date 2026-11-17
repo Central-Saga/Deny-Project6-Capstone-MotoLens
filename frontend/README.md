@@ -1,29 +1,72 @@
 # MotoLens Web Frontend (`frontend/`)
 
-Modul aplikasi web marketplace & inspeksi motor bekas MotoLens.
+Modul aplikasi web marketplace, sertifikat inspeksi AI YOLOv8, simulasi inspeksi browser, komparasi unit, dan dashboard admin MotoLens.
 
-## Teknologi & Arsitektur
-- **Framework:** Next.js 16 (`next@^16.0.0`) App Router (Fase 4)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS & Lucide Icons
-- **State & Data Fetching:** Server Components by default, centralized API client ke Laravel REST API `/api/v1`
+---
 
-## Struktur Direktori Monorepo Terkait
+## 1. Teknologi & Arsitektur (Fase 4)
+- **Framework:** Next.js 16 (`next@^16.0.0`) App Router
+- **Runtime UI:** React 19 & TypeScript 5
+- **Styling & Ikon:** Tailwind CSS v4 & Lucide React Icons
+- **State & Auth:** React Context (`AuthProvider`, `CompareProvider`) terhubung penuh ke Laravel Sanctum REST API (`/api/v1`) tanpa data mock/hardcode.
+
+---
+
+## 2. Struktur Direktori (`frontend/src/`)
 ```text
 frontend/
 ├── src/
-│   ├── app/          # App Router Pages & Layouts
-│   ├── components/   # UI & Domain Components
-│   ├── hooks/        # Custom React Hooks
-│   ├── services/     # API Client & Endpoints
-│   ├── types/        # TypeScript Interfaces & Enums
-│   └── utils/        # Helper Functions & Formatters
+│   ├── app/
+│   │   ├── page.tsx                 # Landing & Katalog Interaktif (Filter, Sort, Favorit, Compare)
+│   │   ├── login/page.tsx           # Autentikasi Sanctum & Tombol Cepat Demo Login (User & Admin)
+│   │   ├── register/page.tsx        # Registrasi Akun Baru (Role User)
+│   │   ├── motorcycles/[id]/page.tsx# Detail Listing, BoundingBoxViewer, Explainable Price Breakdown
+│   │   ├── compare/page.tsx         # Komparasi Berdampingan 2–3 Unit Motor
+│   │   ├── inspect-simulator/page.tsx # Simulasi Inspeksi Web (source_type = web_upload)
+│   │   ├── garasi-saya/
+│   │   │   ├── page.tsx             # Manajemen Listing, Survei Masuk/Keluar & Daftar Favorit
+│   │   │   └── tambah/page.tsx      # Penerbitan Listing Baru dari Sertifikat Inspeksi AI
+│   │   ├── admin/page.tsx           # Dashboard Admin (Analitik, Moderasi, CRUD Model, Metrik ONNX, Laporan & Audit Log)
+│   │   ├── loading.tsx              # Global Loading State
+│   │   ├── error.tsx                # Global Error Boundary
+│   │   └── not-found.tsx            # Halaman HTTP 404
+│   ├── components/
+│   │   ├── shared/                  # Navbar, Footer, MobileBottomNav, FloatingCompareBar, PriceBadge, ConditionBadge, VerificationBadge, DamageSummaryPills, StateFeedback
+│   │   └── features/                # BoundingBoxViewer, MotorcycleCard
+│   ├── hooks/                       # useAuth, useCompare, useNotifications
+│   ├── services/                    # apiClient, authService, motorcycleService, inspectionService, inquiryService, notificationService, adminService
+│   ├── types/                       # Kontrak TypeScript (api, auth, motorcycle, inspection, inquiry, notification, admin)
+│   └── utils/                       # formatters (IDR, WITA Asia/Makassar, WhatsApp) & boundingBox scaling
+├── next.config.ts
+├── tsconfig.json
+└── package.json
 ```
 
-## Lingkup Fitur (Fase 4)
-1. **Katalog Publik & Pencarian:** Filter merek, model, rentang tahun, kilometer, rentang harga, grade visual, dan label harga.
-2. **Detail Listing & Sertifikat AI:** Visualisasi interaktif perbandingan foto asli vs foto anotasi bounding box YOLOv8, breakdown taksiran harga, dan indikator kesepakatan harga (`Good Deal`, `Fair Price`, `Overpriced`).
-3. **Komparasi Unit:** Fitur perbandingan berdampingan 2–3 motor bekas.
-4. **Booking Survei & Garasi Penjual:** Pengajuan jadwal survei fisik, manajemen listing di garasi saya, dan status ketersediaan motor.
-5. **Dashboard Moderasi Admin:** Analitik pasar dan persetujuan listing.
+---
 
+## 3. Cara Menjalankan Development & Production Build
+
+1. **Pastikan Server Laravel (`/api/v1`) Aktif di Port 8000:**
+   ```bash
+   cd ../backend
+   php artisan serve --port=8000
+   ```
+
+2. **Konfigurasi Environment (`frontend/.env.local`):**
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+   NEXT_PUBLIC_APP_NAME=MotoLens
+   NEXT_PUBLIC_DISPLAY_TIMEZONE=Asia/Makassar
+   ```
+
+3. **Jalankan Server Development Next.js 16:**
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+4. **Verifikasi Type Check & Production Build:**
+   ```bash
+   npx tsc --noEmit
+   npm run build
+   ```

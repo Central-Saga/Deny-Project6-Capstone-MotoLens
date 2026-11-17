@@ -22,6 +22,13 @@ class MotorcycleResource extends JsonResource
             }
         }
 
+        $user = auth('sanctum')->user();
+        $isFavorited = $user ? $this->favoritedBy()->where('user_id', $user->id)->exists() : false;
+
+        $sourceType = $this->latestInspection?->source_type instanceof \BackedEnum
+            ? $this->latestInspection->source_type->value
+            : ($this->latestInspection?->source_type ?? ($this->is_camera_verified ? 'android_camera' : 'seed_demo'));
+
         return [
             'id' => $this->id,
             'title' => $this->title,
@@ -43,7 +50,9 @@ class MotorcycleResource extends JsonResource
             'status' => $this->status instanceof \BackedEnum ? $this->status->value : $this->status,
             'moderation_status' => $this->moderation_status instanceof \BackedEnum ? $this->moderation_status->value : $this->moderation_status,
             'verification_status' => $this->verification_status instanceof \BackedEnum ? $this->verification_status->value : $this->verification_status,
+            'source_type' => $sourceType,
             'is_camera_verified' => (bool) $this->is_camera_verified,
+            'is_favorited' => $isFavorited,
             'inspection_summary' => [
                 'scratch_count' => (int) $this->scratch_count,
                 'dent_count' => (int) $this->dent_count,

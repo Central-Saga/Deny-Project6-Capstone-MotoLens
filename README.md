@@ -58,8 +58,8 @@ motolens/
 | **Fase 1** | Database, Models, Seeders, 100% PostgreSQL | **SELESAI** | 15 Migrations, Seeders 58 listing Bali, 48 Test PASS |
 | **Fase 2** | Core Application (YOLO ONNX, Services, Repositories, Policies) | **SELESAI** | Skrip inferensi nyata, kalkulasi harga Bab 4, 74 Test PASS |
 | **Fase 3** | REST API Laravel `/api/v1` (Controllers, Resources, Sanctum, Notifications) | **SELESAI** | Endpoints lengkap, OpenAPI 3.0, 118 Test PASS (3.974 assertions) |
-| **Fase 4** | Frontend Next.js 16 App Router | *SELANJUTNYA* | Persiapan modul `frontend/` |
-| **Fase 5** | Android Kotlin CameraX Scanner | *TERENCANA* | Persiapan modul `Android-App/` |
+| **Fase 4** | Frontend Next.js 16 App Router (`frontend/`) | **SELESAI** | Katalog, BoundingBoxViewer, Price Breakdown, Simulator, Garasi & Admin (`next build` PASS) |
+| **Fase 5** | Android Kotlin CameraX Scanner (`Android-App/`) | *SELANJUTNYA* | Persiapan modul `Android-App/` |
 
 ---
 
