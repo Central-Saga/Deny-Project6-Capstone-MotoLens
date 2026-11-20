@@ -52,6 +52,7 @@ frontend/next-env.d.ts
 Android-App/.gradle/
 Android-App/build/
 Android-App/app/build/
+Android-App/local.properties
 *.apk
 *.aab
 
