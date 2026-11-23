@@ -1,6 +1,6 @@
 # MotoLens — AI Used Motorcycle Marketplace & Visual Damage Inspection (Bali)
 
-[![Release](https://img.shields.io/badge/release-v1.0.0-DC2626)](docs/PRD.md)
+[![Release](https://img.shields.io/badge/release-v1.0.1-DC2626)](docs/PRD.md)
 [![Backend](https://img.shields.io/badge/Laravel_13-PHP_8.2%2B-FF2D20)](backend/)
 [![Frontend](https://img.shields.io/badge/Next.js_16-App_Router-000000)](frontend/)
 [![Android](https://img.shields.io/badge/Android_Kotlin-CameraX_Jetpack_Compose-3DDC84)](Android-App/)
@@ -23,27 +23,46 @@ motolens/
 │   ├── API_CONTRACT.md   # Spesifikasi Kontrak REST API /api/v1
 │   ├── ML_MODEL_CARD.md  # Dokumentasi Metrik & Batasan Model YOLOv8n ONNX
 │   └── DEMO_GUIDE.md     # Panduan Persiapan & Skenario Demo Live Sidang Capstone
+├── .env.example          # Template konfigurasi environment Docker Compose (tanpa rahasia)
 └── docker-compose.yml    # Orkestrasi Full-Stack 4 Container (PostgreSQL 16, Redis 7, Backend Port 8000, Frontend Port 3000)
 ```
 
 ---
 
-## 2. Cara Menjalankan Seluruh Aplikasi (Docker Full-Stack)
+## 2. Konfigurasi `.env` & Cara Menjalankan Aplikasi (Docker Full-Stack)
 
-Seluruh layanan (`postgres`, `redis`, `backend` termasuk Python ONNX Runtime di `/opt/venv`, dan `frontend`) telah dikontainerisasi dan dapat dinyalakan dengan satu perintah:
+Demi keamanan (*Security By Design*), kredensial database dan kunci enkripsi Laravel tidak di-hardcode di dalam `docker-compose.yml`, melainkan dimuat melalui `env_file: .env` (yang diabaikan oleh Git).
 
+### Langkah 1: Salin `.env.example` ke `.env` & Isi Kredensial
 ```bash
-docker compose up -d
+cp .env.example .env
+```
+Buka file `.env` dan pastikan variabel berikut terisi:
+1. **`POSTGRES_PASSWORD` & `DB_PASSWORD`**: Isi dengan kata sandi acak yang kuat dan identik.
+2. **`APP_KEY`**: Generate kunci enkripsi 32-byte base64 baru menggunakan salah satu perintah berikut:
+   ```bash
+   # Opsi A — Menggunakan OpenSSL:
+   echo "base64:$(openssl rand -base64 32)"
+
+   # Opsi B — Menggunakan container backend:
+   docker compose run --rm backend php artisan key:generate --show
+   ```
+   Tempelkan hasilnya ke `APP_KEY=` di dalam file `.env`.
+
+### Langkah 2: Nyalakan Container & Seeder Data Demo
+```bash
+docker compose up -d --build
+docker compose exec backend php artisan db:seed --force
 ```
 
-### Akses Layanan Lokal
-| Layanan | URL / Port | Keterangan |
+### Akses Layanan & Isolasi Jaringan
+| Layanan | URL / Akses | Keterangan |
 |---|---|---|
 | **Web Showroom & Admin** | `http://localhost:3000` | Katalog Publik, Simulator AI, Komparasi, Garasi Saya (`/garasi-saya`), Admin (`/admin`) |
-| **Backend REST API** | `http://localhost:8000/api/v1` | Endpoint utama untuk Web & Android |
+| **Backend REST API** | `http://localhost:8000/api/v1` | Endpoint utama untuk Web & Android (`APP_ENV=production`, `APP_DEBUG=false`) |
 | **API Health Check** | `http://localhost:8000/api/v1/health` | Pemeriksaan status PostgreSQL, Redis, Model ONNX, dan Python |
-| **PostgreSQL 16** | `localhost:5433` (Container `5432`) | Database utama `motolens` |
-| **Redis 7** | `localhost:6379` | Cache katalog & session store |
+| **PostgreSQL 16** | Internal Docker Network (`postgres:5432`) | Port **tidak diekspos ke host** demi keamanan. Akses CLI: `docker compose exec postgres psql -U postgres -d motolens` |
+| **Redis 7** | Internal Docker Network (`redis:6379`) | Port **tidak diekspos ke host** demi keamanan (hanya diakses internal oleh `backend`). |
 
 ---
 
@@ -51,10 +70,12 @@ docker compose up -d
 
 > **Catatan Keamanan:** Kredensial di bawah ini khusus untuk lingkungan demo/pengujian lokal dan disertakan melalui `UserSeeder`.
 
-| Role | Email | Password | Nomor WhatsApp | Akses Platform |
-|---|---|---|---|---|
-| **User (Penjual & Pembeli)** | `user@motolens.id` | `Password123!` | `081200000000` (`6281200000000`) | Android CameraX App & Web `/garasi-saya` |
-| **Administrator** | `admin@motolens.id` | `Password123!` | `081236009999` (`6281236009999`) | Web Admin Console `/admin` |
+| Role | Email | Nomor WhatsApp | Akses Platform |
+|---|---|---|---|
+| **User (Penjual & Pembeli)** | `user@motolens.id` | `081200000000` (`6281200000000`) | Android CameraX App & Web `/garasi-saya` |
+| **Administrator** | `admin@motolens.id` | `081236009999` (`6281236009999`) | Web Admin Console `/admin` |
+
+*(Kata sandi akun demo mengikuti konfigurasi seeder environment demo di [`backend/config/motolens.php`](backend/config/motolens.php)).*
 
 ---
 
@@ -82,8 +103,8 @@ docker compose up -d
 ## 5. Pengujian & Verifikasi Kualitas
 
 ```bash
-# 1. Backend Laravel 13 (118 Feature & Unit Tests + ONNX Real Inference Test)
-cd backend && php artisan test
+# 1. Backend Laravel 13 (118 Feature & Unit Tests + ONNX Real Inference Test di dalam container)
+docker compose exec backend php artisan test
 
 # 2. Frontend Next.js 16 (TypeScript Strict Check & Production Build)
 cd frontend && npx tsc --noEmit && npm run build

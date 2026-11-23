@@ -20,7 +20,11 @@ class YoloInferenceScriptTest extends TestCase
         $this->scriptPath = dirname(__DIR__, 2) . '/scripts/yolo_infer.py';
         $this->modelPath = dirname(__DIR__, 2) . '/storage/app/ml/model_damage.onnx';
         $this->metadataPath = dirname(__DIR__, 2) . '/storage/app/ml/model_metadata.json';
-        $this->pythonBinary = dirname(__DIR__, 2) . '/venv/Scripts/python.exe';
+        $envPython = getenv('ML_PYTHON_BINARY');
+        $winPython = dirname(__DIR__, 2) . '/venv/Scripts/python.exe';
+        $this->pythonBinary = ($envPython && file_exists($envPython))
+            ? $envPython
+            : (file_exists($winPython) ? $winPython : 'python3');
     }
 
     public function test_model_metadata_json_matches_prd_specifications(): void

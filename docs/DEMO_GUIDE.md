@@ -1,4 +1,4 @@
-# Panduan Demo Live Sidang Capstone MotoLens (`v1.0.0`)
+# Panduan Demo Live Sidang Capstone MotoLens (`v1.0.1`)
 
 Dokumen ini berisi daftar periksa persiapan teknis 5 menit sebelum sidang, skenario demonstrasi *end-to-end* selama 7 menit, serta panduan pemecahan masalah cepat (*troubleshooting*).
 
@@ -6,7 +6,19 @@ Dokumen ini berisi daftar periksa persiapan teknis 5 menit sebelum sidang, skena
 
 ## 1. Checklist 5 Menit Sebelum Sidang
 
-### Langkah 1: Nyalakan Container Full-Stack Docker
+### Langkah 1: Pastikan File `.env` Terkonfigurasi di Root Monorepo
+Jika baru pertama kali menyiapkan environment:
+```bash
+cp .env.example .env
+```
+- Isi `POSTGRES_PASSWORD` dan `DB_PASSWORD` pada `.env` dengan nilai kuat yang sama.
+- Isi `APP_KEY` pada `.env` dengan hasil dari:
+  ```bash
+  docker compose run --rm backend php artisan key:generate --show
+  ```
+- **Catatan Keamanan Infrastruktur:** Port PostgreSQL (`5432`) dan Redis (`6379`) diisolasi di dalam jaringan internal Docker Compose dan tidak dipublish ke host. Service `backend` berjalan dengan profil aman `APP_ENV=production` dan `APP_DEBUG=false`.
+
+### Langkah 2: Nyalakan Container Full-Stack Docker
 Buka terminal di root folder `motolens/` dan jalankan:
 ```bash
 docker compose up -d
@@ -14,14 +26,14 @@ docker compose ps
 ```
 Pastikan keempat container (`motolens-postgres`, `motolens-redis`, `motolens-backend`, `motolens-frontend`) berstatus **Up / Healthy**.
 
-### Langkah 2: Verifikasi Kesehatan Backend & Model YOLOv8 ONNX
+### Langkah 3: Verifikasi Kesehatan Backend & Model YOLOv8 ONNX
 Buka atau jalankan di terminal:
 ```bash
 curl.exe -s http://localhost:8000/api/v1/health
 ```
 Pastikan output JSON menampilkan `"status": "healthy"`, `"database": "connected"`, `"ml_model": "available"`, dan `"python": "available"`.
 
-### Langkah 3: Hubungkan HP Android Fisik ke Backend Laptop
+### Langkah 4: Hubungkan HP Android Fisik ke Backend Laptop
 Pilih **salah satu** dari dua metode paling stabil berikut:
 
 - **Opsi A — Kabel USB dengan ADB Reverse (Paling Stabil, Bebas Masalah Wi-Fi/Firewall):**
@@ -63,7 +75,7 @@ Pilih **salah satu** dari dua metode paling stabil berikut:
 3. Tunjukkan bahwa motor masuk ke tab **Garasi Saya** dengan badge status moderasi **`PENDING`**.
 
 ### Tahap 3 — Moderasi Admin & Analitik Pasar di Web Backoffice (Menit 5)
-1. Di browser laptop, buka `http://localhost:3000/login` dan masuk menggunakan tombol **Demo Admin (`admin@motolens.id`)**, lalu buka **Admin Console (`http://localhost:3000/admin`)**.
+1. Di browser laptop, buka `http://localhost:3000/login` dan masuk menggunakan akun **Demo Admin (`admin@motolens.id`)**, lalu buka **Admin Console (`http://localhost:3000/admin`)**.
 2. Tunjukkan **Overview & Analitik Pasar**, distribusi label harga Bali, serta **Metrik & Kesehatan ONNX**.
 3. Buka menu **Moderasi Listing Motor** di sidebar kiri:
    - Temukan listing baru dari HP Android yang berstatus `pending`.
@@ -71,7 +83,7 @@ Pilih **salah satu** dari dua metode paling stabil berikut:
 
 ### Tahap 4 — Katalog Showroom Web, Komparasi Unit & Booking Survei via WhatsApp (Menit 6–7)
 1. Kembali ke halaman utama Web Showroom (`http://localhost:3000`):
-   - Tunjukkan listing yang baru disetujui kini tayang di katalog publik lengkap dengan badge **"Kamera Android Terverifikasi"**.
+   - Tunjukkan listing yang baru disetujui kini tayang di katalog publik.
    - Klik ikon timbangan pada 2–3 kartu motor untuk mendemonstrasikan fitur **Komparasi Berdampingan (`/compare`)**.
 2. Buka halaman detail motor (`/motorcycles/[id]`):
    - Tunjukkan Sertifikat Inspeksi AI interaktif dan ajukan **Jadwal Survei Fisik (COD)**.
@@ -89,12 +101,10 @@ Pilih **salah satu** dari dua metode paling stabil berikut:
      ```bash
      adb -s <SERIAL_HP> reverse tcp:8000 tcp:8000
      ```
-2. **HP Fisik Menggunakan Wi-Fi LAN tetapi Timeout ke Port 8000:**
-   - Buka PowerShell sebagai Administrator untuk mengizinkan port 8000 di Windows Firewall:
-     ```powershell
-     New-NetFirewallRule -DisplayName "MotoLens API 8000" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
-     ```
-   - Atau langsung gunakan **Opsi A (`adb reverse tcp:8000 tcp:8000`)** yang melewati firewall jaringan.
+2. **Akses Langsung ke Database PostgreSQL (Karena Port Tidak Diekspos ke Host):**
+   ```bash
+   docker compose exec postgres psql -U postgres -d motolens
+   ```
 3. **Mereset Database Demo ke Kondisi Awal (50+ Listing Bersih):**
    ```bash
    docker compose exec backend php artisan migrate:fresh --seed --force

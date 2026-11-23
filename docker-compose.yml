@@ -3,12 +3,11 @@ services:
     image: postgres:16-alpine
     container_name: motolens-postgres
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
       POSTGRES_DB: motolens
-    ports:
-      - "5433:5432"
     volumes:
       - motolens_pgdata:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -22,8 +21,6 @@ services:
     image: redis:7-alpine
     container_name: motolens-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
     volumes:
       - motolens_redisdata:/data
     healthcheck:
@@ -40,18 +37,18 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - APP_NAME=MotoLens
-      - APP_ENV=local
-      - APP_KEY=base64:EKYzZSCzoH8FmECyX7lF9xnEANhBbj/eQIbbLKv2UWo=
-      - APP_DEBUG=true
+      - APP_ENV=production
+      - APP_DEBUG=false
       - APP_URL=http://localhost:8000
       - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_DATABASE=motolens
       - DB_USERNAME=postgres
-      - DB_PASSWORD=password
       - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
