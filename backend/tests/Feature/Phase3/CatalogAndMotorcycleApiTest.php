@@ -394,6 +394,14 @@ class CatalogAndMotorcycleApiTest extends TestCase
             'user_id' => $this->seller->id,
             'seller_price' => 22000000,
         ]);
+
+        $createdId = $response->json('data.id');
+        $this->assertDatabaseHas('motorcycle_price_histories', [
+            'motorcycle_id' => $createdId,
+            'old_price' => null,
+            'new_price' => 22000000,
+            'changed_by' => $this->seller->id,
+        ]);
     }
 
     public function test_user_cannot_update_or_delete_other_users_listing(): void

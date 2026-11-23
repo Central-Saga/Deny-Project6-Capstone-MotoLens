@@ -63,7 +63,7 @@ return new class extends Migration
         });
 
         if (DB::getDriverName() === 'pgsql') {
-            DB::statement('ALTER TABLE motorcycle_price_histories ADD CONSTRAINT motorcycle_price_histories_prices_positive CHECK (old_price > 0 AND new_price > 0)');
+            DB::statement('ALTER TABLE motorcycle_price_histories ADD CONSTRAINT motorcycle_price_histories_prices_positive CHECK ((old_price IS NULL OR old_price > 0) AND new_price > 0)');
         }
     }
 

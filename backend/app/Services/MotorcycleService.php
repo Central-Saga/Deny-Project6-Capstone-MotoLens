@@ -13,6 +13,7 @@ use App\Models\Motorcycle;
 use App\Models\MotorcycleInspection;
 use App\Models\MotorcycleModel;
 use App\Models\MotorcyclePriceHistory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MotorcycleService
@@ -84,72 +85,87 @@ class MotorcycleService
         $isCameraVerified = ($inspection->source_type === SourceType::AndroidCamera &&
             $inspection->verification_status === VerificationStatus::Verified);
 
-        // Buat listing motor baru
-        $motorcycle = Motorcycle::create([
-            'user_id' => $userId,
-            'motorcycle_model_id' => $modelId,
-            'title' => $data['title'] ?? 'Motor Bekas Terinspeksi AI',
-            'description' => $data['description'] ?? null,
-            'year' => $year,
-            'odometer_km' => $odometerKm,
-            'tax_status' => $taxStatus,
-            'location_address' => $data['location_address'] ?? 'Denpasar, Bali',
-            'latitude' => $inspection->latitude ?? ($data['latitude'] ?? null),
-            'longitude' => $inspection->longitude ?? ($data['longitude'] ?? null),
-            'seller_price' => $sellerPrice,
-            'base_depreciated_price' => $inspection->base_depreciated_price,
-            'ml_predicted_price' => $mlPredictedPrice,
-            'price_label' => $priceLabel,
-            'condition_grade' => $conditionGrade,
-            'scratch_count' => $inspection->scratch_count,
-            'dent_count' => $inspection->dent_count,
-            'accident_count' => $inspection->accident_count,
-            'damage_penalty_percent' => $inspection->damage_penalty_percent,
-            'latest_inspection_id' => $inspection->id,
-            'is_camera_verified' => $isCameraVerified,
-            'verification_status' => $inspection->verification_status,
-            'status' => ListingStatus::Available,
-            'moderation_status' => ModerationStatus::Pending,
-        ]);
-
-        // Hubungkan inspeksi ke motorcycle
-        $inspection->update(['motorcycle_id' => $motorcycle->id]);
-
-        // Salin media dari inspeksi ke koleksi listing
-        $rawPhoto = $inspection->getFirstMedia(MotorcycleInspection::MEDIA_RAW_PHOTO);
-        if ($rawPhoto && file_exists($rawPhoto->getPath())) {
-            $motorcycle->addMedia($rawPhoto->getPath())
-                ->preservingOriginal()
-                ->toMediaCollection(Motorcycle::MEDIA_MAIN_PHOTO);
-        }
-
-        $annotatedPhoto = $inspection->getFirstMedia(MotorcycleInspection::MEDIA_ANNOTATED_PHOTO);
-        if ($annotatedPhoto && file_exists($annotatedPhoto->getPath())) {
-            $motorcycle->addMedia($annotatedPhoto->getPath())
-                ->preservingOriginal()
-                ->toMediaCollection(Motorcycle::MEDIA_DAMAGE_DETAILS);
-        }
-
-        // Catat riwayat harga pertama kali
-        MotorcyclePriceHistory::create([
-            'motorcycle_id' => $motorcycle->id,
-            'old_price' => null,
-            'new_price' => $sellerPrice,
-            'changed_by' => $userId,
-        ]);
-
-        activity('listing')
-            ->performedOn($motorcycle)
-            ->causedBy($userId)
-            ->withProperties([
+        return DB::transaction(function () use (
+            $userId,
+            $modelId,
+            $data,
+            $year,
+            $odometerKm,
+            $taxStatus,
+            $inspection,
+            $sellerPrice,
+            $mlPredictedPrice,
+            $priceLabel,
+            $conditionGrade,
+            $isCameraVerified
+        ): Motorcycle {
+            // Buat listing motor baru
+            $motorcycle = Motorcycle::create([
+                'user_id' => $userId,
+                'motorcycle_model_id' => $modelId,
+                'title' => $data['title'] ?? 'Motor Bekas Terinspeksi AI',
+                'description' => $data['description'] ?? null,
+                'year' => $year,
+                'odometer_km' => $odometerKm,
+                'tax_status' => $taxStatus,
+                'location_address' => $data['location_address'] ?? 'Denpasar, Bali',
+                'latitude' => $inspection->latitude ?? ($data['latitude'] ?? null),
+                'longitude' => $inspection->longitude ?? ($data['longitude'] ?? null),
                 'seller_price' => $sellerPrice,
+                'base_depreciated_price' => $inspection->base_depreciated_price,
                 'ml_predicted_price' => $mlPredictedPrice,
-                'price_label' => $priceLabel->value,
-                'inspection_id' => $inspection->id,
-            ])
-            ->log('Listing motor baru berhasil diterbitkan dari hasil inspeksi AI.');
+                'price_label' => $priceLabel,
+                'condition_grade' => $conditionGrade,
+                'scratch_count' => $inspection->scratch_count,
+                'dent_count' => $inspection->dent_count,
+                'accident_count' => $inspection->accident_count,
+                'damage_penalty_percent' => $inspection->damage_penalty_percent,
+                'latest_inspection_id' => $inspection->id,
+                'is_camera_verified' => $isCameraVerified,
+                'verification_status' => $inspection->verification_status,
+                'status' => ListingStatus::Available,
+                'moderation_status' => ModerationStatus::Pending,
+            ]);
 
-        return $motorcycle;
+            // Hubungkan inspeksi ke motorcycle
+            $inspection->update(['motorcycle_id' => $motorcycle->id]);
+
+            // Salin media dari inspeksi ke koleksi listing
+            $rawPhoto = $inspection->getFirstMedia(MotorcycleInspection::MEDIA_RAW_PHOTO);
+            if ($rawPhoto && file_exists($rawPhoto->getPath())) {
+                $motorcycle->addMedia($rawPhoto->getPath())
+                    ->preservingOriginal()
+                    ->toMediaCollection(Motorcycle::MEDIA_MAIN_PHOTO);
+            }
+
+            $annotatedPhoto = $inspection->getFirstMedia(MotorcycleInspection::MEDIA_ANNOTATED_PHOTO);
+            if ($annotatedPhoto && file_exists($annotatedPhoto->getPath())) {
+                $motorcycle->addMedia($annotatedPhoto->getPath())
+                    ->preservingOriginal()
+                    ->toMediaCollection(Motorcycle::MEDIA_DAMAGE_DETAILS);
+            }
+
+            // Catat riwayat harga pertama kali
+            MotorcyclePriceHistory::create([
+                'motorcycle_id' => $motorcycle->id,
+                'old_price' => null,
+                'new_price' => $sellerPrice,
+                'changed_by' => $userId,
+            ]);
+
+            activity('listing')
+                ->performedOn($motorcycle)
+                ->causedBy($userId)
+                ->withProperties([
+                    'seller_price' => $sellerPrice,
+                    'ml_predicted_price' => $mlPredictedPrice,
+                    'price_label' => $priceLabel->value,
+                    'inspection_id' => $inspection->id,
+                ])
+                ->log('Listing motor baru berhasil diterbitkan dari hasil inspeksi AI.');
+
+            return $motorcycle;
+        });
     }
 
     /**

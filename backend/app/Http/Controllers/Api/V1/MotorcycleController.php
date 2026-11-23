@@ -19,6 +19,7 @@ use App\Services\PriceEstimationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -220,51 +221,63 @@ class MotorcycleController extends Controller
             $conditionGrade = ConditionGrade::Mulus->value;
         }
 
-        $motorcycle = Motorcycle::create([
-            'user_id' => $user->id,
-            'motorcycle_model_id' => $modelId ?? 1,
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'year' => (int) ($snapshot['vehicle_year'] ?? now()->year),
-            'odometer_km' => (int) ($snapshot['odometer_km'] ?? 0),
-            'tax_status' => $snapshot['tax_status'] ?? TaxStatus::Active->value,
-            'location_address' => $validated['location_address'],
-            'latitude' => $validated['latitude'] ?? $inspection->latitude,
-            'longitude' => $validated['longitude'] ?? $inspection->longitude,
-            'seller_price' => $validated['seller_price'],
-            'base_depreciated_price' => $inspection->base_depreciated_price ?? $validated['seller_price'],
-            'ml_predicted_price' => $inspection->ml_predicted_price ?? $validated['seller_price'],
-            'price_label' => $priceLabel?->value,
-            'condition_grade' => $conditionGrade,
-            'scratch_count' => (int) $inspection->scratch_count,
-            'dent_count' => (int) $inspection->dent_count,
-            'accident_count' => (int) $inspection->accident_count,
-            'damage_penalty_percent' => $inspection->damage_penalty_percent ?? 0,
-            'latest_inspection_id' => $inspection->id,
-            'is_camera_verified' => (bool) ($inspection->verification_status?->value === 'submitted'),
-            'verification_status' => $inspection->verification_status ?? 'pending',
-            'status' => ListingStatus::Available->value,
-            'moderation_status' => ModerationStatus::Pending->value,
-        ]);
+        $motorcycle = DB::transaction(function () use (
+            $user,
+            $modelId,
+            $validated,
+            $snapshot,
+            $inspection,
+            $priceLabel,
+            $conditionGrade
+        ): Motorcycle {
+            $motorcycle = Motorcycle::create([
+                'user_id' => $user->id,
+                'motorcycle_model_id' => $modelId ?? 1,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'year' => (int) ($snapshot['vehicle_year'] ?? now()->year),
+                'odometer_km' => (int) ($snapshot['odometer_km'] ?? 0),
+                'tax_status' => $snapshot['tax_status'] ?? TaxStatus::Active->value,
+                'location_address' => $validated['location_address'],
+                'latitude' => $validated['latitude'] ?? $inspection->latitude,
+                'longitude' => $validated['longitude'] ?? $inspection->longitude,
+                'seller_price' => $validated['seller_price'],
+                'base_depreciated_price' => $inspection->base_depreciated_price ?? $validated['seller_price'],
+                'ml_predicted_price' => $inspection->ml_predicted_price ?? $validated['seller_price'],
+                'price_label' => $priceLabel?->value,
+                'condition_grade' => $conditionGrade,
+                'scratch_count' => (int) $inspection->scratch_count,
+                'dent_count' => (int) $inspection->dent_count,
+                'accident_count' => (int) $inspection->accident_count,
+                'damage_penalty_percent' => $inspection->damage_penalty_percent ?? 0,
+                'latest_inspection_id' => $inspection->id,
+                'is_camera_verified' => (bool) ($inspection->verification_status?->value === 'submitted'),
+                'verification_status' => $inspection->verification_status ?? 'pending',
+                'status' => ListingStatus::Available->value,
+                'moderation_status' => ModerationStatus::Pending->value,
+            ]);
 
-        // Hubungkan inspeksi ke unit motor
-        $inspection->update(['motorcycle_id' => $motorcycle->id]);
+            // Hubungkan inspeksi ke unit motor
+            $inspection->update(['motorcycle_id' => $motorcycle->id]);
 
-        // Copy media dari inspeksi ke foto utama motor bila tersedia
-        $annotatedMedia = $inspection->getFirstMedia(MotorcycleInspection::MEDIA_ANNOTATED_PHOTO);
-        if ($annotatedMedia && file_exists($annotatedMedia->getPath())) {
-            $motorcycle->addMedia($annotatedMedia->getPath())
-                ->preservingOriginal()
-                ->toMediaCollection(Motorcycle::MEDIA_MAIN_PHOTO);
-        }
+            // Copy media dari inspeksi ke foto utama motor bila tersedia
+            $annotatedMedia = $inspection->getFirstMedia(MotorcycleInspection::MEDIA_ANNOTATED_PHOTO);
+            if ($annotatedMedia && file_exists($annotatedMedia->getPath())) {
+                $motorcycle->addMedia($annotatedMedia->getPath())
+                    ->preservingOriginal()
+                    ->toMediaCollection(Motorcycle::MEDIA_MAIN_PHOTO);
+            }
 
-        // Catat riwayat harga awal
-        MotorcyclePriceHistory::create([
-            'motorcycle_id' => $motorcycle->id,
-            'old_price' => null,
-            'new_price' => $validated['seller_price'],
-            'changed_by' => $user->id,
-        ]);
+            // Catat riwayat harga awal
+            MotorcyclePriceHistory::create([
+                'motorcycle_id' => $motorcycle->id,
+                'old_price' => null,
+                'new_price' => $validated['seller_price'],
+                'changed_by' => $user->id,
+            ]);
+
+            return $motorcycle;
+        });
 
         $this->invalidateCatalogCache();
 
