@@ -40,9 +40,8 @@ RUN composer install --no-interaction --no-scripts --no-autoloader --prefer-dist
 # Copy remaining application source code
 COPY . .
 
-# Generate optimized autoloader, create empty .env placeholder for artisan test, and set permissions
+# Generate optimized autoloader and set permissions
 RUN composer dump-autoload --optimize \
-    && touch /var/www/html/.env \
     && chmod -R 777 storage bootstrap/cache
 
 EXPOSE 8000
