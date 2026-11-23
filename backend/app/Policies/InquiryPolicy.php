@@ -45,4 +45,3 @@ class InquiryPolicy
         return $user->hasRole('admin');
     }
 }
-

@@ -21,7 +21,9 @@ class YoloInspectionServiceTest extends TestCase
     use RefreshDatabase;
 
     protected YoloInspectionService $inspectionService;
+
     protected User $user;
+
     protected MotorcycleModel $motorcycleModel;
 
     protected function setUp(): void

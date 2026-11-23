@@ -52,4 +52,3 @@ class InquiryFactory extends Factory
         ]);
     }
 }
-

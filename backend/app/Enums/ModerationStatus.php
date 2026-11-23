@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ModerationStatus : string
+enum ModerationStatus: string
 {
     case Pending = 'pending';
     case Approved = 'approved';
@@ -14,4 +14,3 @@ enum ModerationStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

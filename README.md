@@ -1,7 +1,8 @@
 # MotoLens — AI Used Motorcycle Marketplace & Visual Damage Inspection (Bali)
 
+[![CI](https://github.com/Central-Saga/Deny-Project6-Capstone-MotoLens/actions/workflows/ci.yml/badge.svg)](https://github.com/Central-Saga/Deny-Project6-Capstone-MotoLens/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/badge/release-v1.0.1-DC2626)](docs/PRD.md)
-[![Backend](https://img.shields.io/badge/Laravel_13-PHP_8.2%2B-FF2D20)](backend/)
+[![Backend](https://img.shields.io/badge/Laravel_13-PHP_8.3-FF2D20)](backend/)
 [![Frontend](https://img.shields.io/badge/Next.js_16-App_Router-000000)](frontend/)
 [![Android](https://img.shields.io/badge/Android_Kotlin-CameraX_Jetpack_Compose-3DDC84)](Android-App/)
 [![ML](https://img.shields.io/badge/YOLOv8n_ONNX-84.34%25_mAP%4050-00599C)](ML/)

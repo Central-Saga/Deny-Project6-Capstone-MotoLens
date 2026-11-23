@@ -41,7 +41,7 @@ class InquiryService
 
         if ($motorcycle->status !== ListingStatus::Available) {
             throw ValidationException::withMessages([
-                'motorcycle_id' => ['Motor saat ini tidak tersedia untuk booking (status: ' . $motorcycle->status->value . ').'],
+                'motorcycle_id' => ['Motor saat ini tidak tersedia untuk booking (status: '.$motorcycle->status->value.').'],
             ]);
         }
 
@@ -150,4 +150,3 @@ class InquiryService
         return $this->respondInquiry($inquiry, InquiryStatus::Cancelled, $userId);
     }
 }
-

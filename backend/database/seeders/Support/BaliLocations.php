@@ -41,4 +41,3 @@ final class BaliLocations
         return "{$location['area']}, {$location['regency']}, Bali";
     }
 }
-

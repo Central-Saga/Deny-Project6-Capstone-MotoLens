@@ -26,4 +26,3 @@ class MotorcyclePriceHistoryFactory extends Factory
         ];
     }
 }
-

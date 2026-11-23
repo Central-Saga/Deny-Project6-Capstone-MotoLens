@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum FeedbackType : string
+enum FeedbackType: string
 {
     case FalsePositive = 'false_positive';
     case FalseNegative = 'false_negative';
@@ -15,4 +15,3 @@ enum FeedbackType : string
         return array_column(self::cases(), 'value');
     }
 }
-

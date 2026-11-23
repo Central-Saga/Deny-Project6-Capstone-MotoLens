@@ -66,4 +66,3 @@ class MotorcycleModelSeeder extends Seeder
         }
     }
 }
-

@@ -272,4 +272,3 @@ class Motorcycle extends Model implements HasMedia
             ->dontSubmitEmptyLogs();
     }
 }
-

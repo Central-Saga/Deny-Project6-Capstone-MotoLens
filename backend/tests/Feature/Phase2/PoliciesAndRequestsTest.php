@@ -22,8 +22,11 @@ class PoliciesAndRequestsTest extends TestCase
     use RefreshDatabase;
 
     protected User $owner;
+
     protected User $stranger;
+
     protected User $admin;
+
     protected Motorcycle $motorcycle;
 
     protected function setUp(): void
@@ -67,7 +70,7 @@ class PoliciesAndRequestsTest extends TestCase
 
     public function test_inspect_request_validation_rules(): void
     {
-        $request = new InspectMotorcycleRequest();
+        $request = new InspectMotorcycleRequest;
         $rules = $request->rules();
 
         // 1. Data kosong harus gagal validasi
@@ -88,7 +91,7 @@ class PoliciesAndRequestsTest extends TestCase
 
     public function test_store_inquiry_request_requires_future_date(): void
     {
-        $request = new StoreInquiryRequest();
+        $request = new StoreInquiryRequest;
         $rules = $request->rules();
 
         // Tanggal masa lalu harus gagal

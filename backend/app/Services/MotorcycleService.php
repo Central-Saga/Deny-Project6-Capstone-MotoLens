@@ -11,7 +11,6 @@ use App\Enums\SourceType;
 use App\Enums\VerificationStatus;
 use App\Models\Motorcycle;
 use App\Models\MotorcycleInspection;
-use App\Models\MotorcycleModel;
 use App\Models\MotorcyclePriceHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;

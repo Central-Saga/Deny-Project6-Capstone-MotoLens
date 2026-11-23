@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum FeedbackReviewStatus : string
+enum FeedbackReviewStatus: string
 {
     case Pending = 'pending';
     case Accepted = 'accepted';
@@ -14,4 +14,3 @@ enum FeedbackReviewStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

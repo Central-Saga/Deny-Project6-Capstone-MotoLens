@@ -23,9 +23,7 @@ class InspectionController extends Controller
 {
     use ApiResponseTrait;
 
-    public function __construct(protected YoloInspectionService $inspectionService)
-    {
-    }
+    public function __construct(protected YoloInspectionService $inspectionService) {}
 
     /**
      * Jalankan inspeksi AI pada foto bodi motor via YOLOv8 ONNX pipeline.

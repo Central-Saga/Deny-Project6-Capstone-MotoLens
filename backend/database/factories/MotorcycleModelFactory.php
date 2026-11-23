@@ -32,4 +32,3 @@ class MotorcycleModelFactory extends Factory
         return $this->state(fn () => ['is_active' => false]);
     }
 }
-

@@ -15,8 +15,7 @@ class MotorcycleModerationNotification extends Notification
         public Motorcycle $motorcycle,
         public ModerationStatus $status,
         public ?string $reason = null
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -40,4 +39,3 @@ class MotorcycleModerationNotification extends Notification
         ];
     }
 }
-

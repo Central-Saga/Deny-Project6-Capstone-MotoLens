@@ -20,8 +20,11 @@ class InquiryServiceTest extends TestCase
     use RefreshDatabase;
 
     protected InquiryService $inquiryService;
+
     protected User $seller;
+
     protected User $buyer;
+
     protected Motorcycle $motorcycle;
 
     protected function setUp(): void

@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ConditionGrade : string
+enum ConditionGrade: string
 {
     case Mulus = 'mulus';
     case LecetRingan = 'lecet_ringan';
@@ -14,4 +14,3 @@ enum ConditionGrade : string
         return array_column(self::cases(), 'value');
     }
 }
-

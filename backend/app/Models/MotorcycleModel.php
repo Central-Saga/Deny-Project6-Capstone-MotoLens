@@ -78,4 +78,3 @@ class MotorcycleModel extends Model
         return "{$this->brand} {$this->model_name}";
     }
 }
-

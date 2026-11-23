@@ -27,4 +27,3 @@ class ReportFactory extends Factory
         ];
     }
 }
-

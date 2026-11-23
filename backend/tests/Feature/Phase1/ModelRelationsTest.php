@@ -5,6 +5,7 @@ namespace Tests\Feature\Phase1;
 use App\Enums\ListingStatus;
 use App\Enums\ModerationStatus;
 use App\Enums\SourceType;
+use App\Enums\TaxStatus;
 use App\Models\Inquiry;
 use App\Models\InspectionFeedback;
 use App\Models\Motorcycle;
@@ -15,9 +16,13 @@ use App\Models\Report;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Traits\HasRoles;
 use Tests\TestCase;
 
 /**
@@ -219,11 +224,11 @@ class ModelRelationsTest extends TestCase
 
     public function test_models_use_required_traits(): void
     {
-        $this->assertContains(\Spatie\Permission\Traits\HasRoles::class, class_uses_recursive(User::class));
-        $this->assertContains(\Spatie\MediaLibrary\InteractsWithMedia::class, class_uses_recursive(Motorcycle::class));
-        $this->assertContains(\Spatie\MediaLibrary\InteractsWithMedia::class, class_uses_recursive(MotorcycleInspection::class));
+        $this->assertContains(HasRoles::class, class_uses_recursive(User::class));
+        $this->assertContains(InteractsWithMedia::class, class_uses_recursive(Motorcycle::class));
+        $this->assertContains(InteractsWithMedia::class, class_uses_recursive(MotorcycleInspection::class));
         foreach ([Motorcycle::class, MotorcycleModel::class, MotorcycleInspection::class, Inquiry::class] as $model) {
-            $this->assertContains(\Spatie\Activitylog\Traits\LogsActivity::class, class_uses_recursive($model));
+            $this->assertContains(LogsActivity::class, class_uses_recursive($model));
         }
     }
 
@@ -234,12 +239,12 @@ class ModelRelationsTest extends TestCase
 
         $this->assertIsInt($motorcycle->seller_price);
         $this->assertIsInt($motorcycle->ml_predicted_price);
-        $this->assertInstanceOf(\App\Enums\TaxStatus::class, $motorcycle->tax_status);
+        $this->assertInstanceOf(TaxStatus::class, $motorcycle->tax_status);
         $this->assertInstanceOf(ListingStatus::class, $motorcycle->status);
         $this->assertInstanceOf(ModerationStatus::class, $motorcycle->moderation_status);
         $this->assertIsArray($inspection->detections_json);
         $this->assertIsArray($inspection->price_calculation_snapshot);
-        $this->assertInstanceOf(\Illuminate\Support\Carbon::class, $motorcycle->created_at);
+        $this->assertInstanceOf(Carbon::class, $motorcycle->created_at);
     }
 
     public function test_reference_price_changes_are_traceable_in_activity_log(): void

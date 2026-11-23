@@ -30,7 +30,7 @@ class ActivityLogResource extends JsonResource
                 'name' => $this->causer->name ?? null,
                 'email' => $this->causer->email ?? null,
             ] : null,
-            'properties' => empty($properties) ? new \stdClass() : $properties,
+            'properties' => empty($properties) ? new \stdClass : $properties,
             'created_at' => $this->created_at?->toISOString(),
         ];
     }

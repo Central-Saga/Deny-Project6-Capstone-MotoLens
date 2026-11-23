@@ -21,10 +21,15 @@ class RepositoriesTest extends TestCase
     use RefreshDatabase;
 
     protected MotorcycleRepository $motorcycleRepo;
+
     protected InquiryRepository $inquiryRepo;
+
     protected User $user1;
+
     protected User $user2;
+
     protected MotorcycleModel $hondaModel;
+
     protected MotorcycleModel $yamahaModel;
 
     protected function setUp(): void

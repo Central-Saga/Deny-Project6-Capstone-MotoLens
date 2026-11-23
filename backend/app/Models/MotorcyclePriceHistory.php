@@ -37,4 +37,3 @@ class MotorcyclePriceHistory extends Model
         return $this->belongsTo(User::class, 'changed_by');
     }
 }
-

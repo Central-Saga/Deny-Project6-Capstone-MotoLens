@@ -17,6 +17,5 @@ class ListingModerationStatusChanged
         public ModerationStatus $oldStatus,
         public ModerationStatus $newStatus,
         public ?string $rejectionReason = null
-    ) {
-    }
+    ) {}
 }

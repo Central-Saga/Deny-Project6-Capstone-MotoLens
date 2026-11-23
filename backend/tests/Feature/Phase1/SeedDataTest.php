@@ -18,6 +18,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
@@ -235,8 +237,8 @@ class SeedDataTest extends TestCase
     {
         $counts = fn () => [
             Motorcycle::count(), MotorcycleInspection::count(), User::count(), MotorcycleModel::count(),
-            Inquiry::count(), MotorcyclePriceHistory::count(), \Spatie\MediaLibrary\MediaCollections\Models\Media::count(),
-            \Spatie\Permission\Models\Role::count(),
+            Inquiry::count(), MotorcyclePriceHistory::count(), Media::count(),
+            Role::count(),
         ];
         $before = $counts();
 

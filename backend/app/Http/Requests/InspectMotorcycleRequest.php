@@ -45,4 +45,3 @@ class InspectMotorcycleRequest extends FormRequest
         ];
     }
 }
-

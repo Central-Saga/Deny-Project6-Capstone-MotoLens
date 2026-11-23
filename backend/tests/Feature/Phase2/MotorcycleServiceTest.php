@@ -24,10 +24,15 @@ class MotorcycleServiceTest extends TestCase
     use RefreshDatabase;
 
     protected MotorcycleService $motorcycleService;
+
     protected User $owner;
+
     protected User $otherUser;
+
     protected User $admin;
+
     protected MotorcycleModel $motorcycleModel;
+
     protected MotorcycleInspection $inspection;
 
     protected function setUp(): void

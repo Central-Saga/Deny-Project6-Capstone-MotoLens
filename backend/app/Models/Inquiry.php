@@ -92,4 +92,3 @@ class Inquiry extends Model
             ->dontSubmitEmptyLogs();
     }
 }
-

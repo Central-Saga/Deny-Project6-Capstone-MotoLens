@@ -19,8 +19,11 @@ class InspectionApiTest extends TestCase
     use RefreshDatabase;
 
     protected User $user;
+
     protected User $otherUser;
+
     protected User $admin;
+
     protected MotorcycleModel $model;
 
     protected function setUp(): void

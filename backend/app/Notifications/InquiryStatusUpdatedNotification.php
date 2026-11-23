@@ -2,7 +2,6 @@
 
 namespace App\Notifications;
 
-use App\Enums\InquiryStatus;
 use App\Models\Inquiry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -15,8 +14,7 @@ class InquiryStatusUpdatedNotification extends Notification
         public Inquiry $inquiry,
         public string $actorRole = 'seller',
         public ?string $customMessage = null
-    ) {
-    }
+    ) {}
 
     public function via(object $notifiable): array
     {
@@ -49,4 +47,3 @@ class InquiryStatusUpdatedNotification extends Notification
         ];
     }
 }
-

@@ -2,6 +2,4 @@
 
 namespace App\Notifications;
 
-class InquiryReceivedNotification extends NewInquiryNotification
-{
-}
+class InquiryReceivedNotification extends NewInquiryNotification {}

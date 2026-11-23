@@ -22,8 +22,11 @@ class CatalogAndMotorcycleApiTest extends TestCase
     use RefreshDatabase;
 
     protected User $seller;
+
     protected User $otherUser;
+
     protected MotorcycleModel $modelHonda;
+
     protected MotorcycleModel $modelYamaha;
 
     protected function setUp(): void

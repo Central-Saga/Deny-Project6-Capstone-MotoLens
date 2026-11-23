@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum InquiryStatus : string
+enum InquiryStatus: string
 {
     case Pending = 'pending';
     case Accepted = 'accepted';
@@ -16,4 +16,3 @@ enum InquiryStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

@@ -51,4 +51,3 @@ class DemoAccountSeederTest extends TestCase
         $this->assertSame(['user'], User::where('email', 'user@motolens.id')->first()->getRoleNames()->all());
     }
 }
-

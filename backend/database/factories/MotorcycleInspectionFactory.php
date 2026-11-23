@@ -171,4 +171,3 @@ class MotorcycleInspectionFactory extends Factory
         return [$detections, $average];
     }
 }
-

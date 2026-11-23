@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\ModerationStatus;
 use App\Models\Motorcycle;
+use App\Models\MotorcycleInspection;
 use App\Models\MotorcycleModel;
 use App\Models\MotorcyclePriceHistory;
 use App\Models\User;
@@ -109,7 +110,7 @@ class MotorcycleSeeder extends Seeder
 
     private function exists(string $key): bool
     {
-        return \App\Models\MotorcycleInspection::query()
+        return MotorcycleInspection::query()
             ->where('source_type', 'seed_demo')
             ->where('price_calculation_snapshot->seed_key', $key)
             ->exists();
@@ -117,7 +118,7 @@ class MotorcycleSeeder extends Seeder
 
     private function seededCount(): int
     {
-        return \App\Models\MotorcycleInspection::query()
+        return MotorcycleInspection::query()
             ->where('source_type', 'seed_demo')
             ->whereNotNull('price_calculation_snapshot->seed_key')
             ->count();
@@ -210,4 +211,3 @@ class MotorcycleSeeder extends Seeder
         return [(int) round(($r + $m) * 255), (int) round(($g + $m) * 255), (int) round(($b + $m) * 255)];
     }
 }
-

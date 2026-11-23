@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\FeedbackReviewStatus;
 use App\Enums\InspectionStatus;
-use App\Enums\ListingStatus;
 use App\Enums\ModerationStatus;
 use App\Enums\ReportStatus;
 use App\Enums\VerificationStatus;
@@ -23,7 +22,6 @@ use App\Models\Motorcycle;
 use App\Models\MotorcycleInspection;
 use App\Models\Report;
 use App\Models\User;
-use App\Notifications\ListingModeratedNotification;
 use App\Notifications\MotorcycleModerationNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
