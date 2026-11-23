@@ -8,7 +8,7 @@ use App\Enums\InquiryStatus;
 use App\Enums\ListingStatus;
 use App\Enums\ModerationStatus;
 use App\Enums\PriceLabel;
-use App\Enums\ReportStatus;
+use App\Enums\SourceType;
 use App\Enums\TaxStatus;
 use App\Models\Inquiry;
 use App\Models\InspectionFeedback;
@@ -32,9 +32,13 @@ class NotificationAndSupportApiTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $seller;
+
     protected User $buyer;
+
     protected MotorcycleModel $model;
+
     protected Motorcycle $motorcycle;
 
     protected function setUp(): void
@@ -289,7 +293,7 @@ class NotificationAndSupportApiTest extends TestCase
             'ml_predicted_price' => 26500000,
             'damage_penalty_percent' => 2.5,
             'verification_status' => 'verified',
-            'source_type' => \App\Enums\SourceType::AndroidCamera,
+            'source_type' => SourceType::AndroidCamera,
             'inspection_status' => 'completed',
         ]);
 

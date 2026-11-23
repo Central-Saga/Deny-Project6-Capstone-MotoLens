@@ -35,14 +35,14 @@ class MotorcycleRepository
         // Filter brand / merk motor
         if (! empty($filters['brand'])) {
             $query->whereHas('model', function (Builder $q) use ($filters) {
-                $q->where('brand', 'ilike', '%' . $filters['brand'] . '%');
+                $q->where('brand', 'ilike', '%'.$filters['brand'].'%');
             });
         }
 
         // Filter model / nama tipe motor
         if (! empty($filters['model'])) {
             $query->whereHas('model', function (Builder $q) use ($filters) {
-                $q->where('model_name', 'ilike', '%' . $filters['model'] . '%');
+                $q->where('model_name', 'ilike', '%'.$filters['model'].'%');
             });
         }
 
@@ -80,12 +80,12 @@ class MotorcycleRepository
 
         // Filter wilayah / lokasi
         if (! empty($filters['location'])) {
-            $query->where('location_address', 'ilike', '%' . $filters['location'] . '%');
+            $query->where('location_address', 'ilike', '%'.$filters['location'].'%');
         }
 
         // Pencarian teks umum (judul, deskripsi, brand, model)
         if (! empty($filters['search'])) {
-            $search = '%' . $filters['search'] . '%';
+            $search = '%'.$filters['search'].'%';
             $query->where(function (Builder $q) use ($search) {
                 $q->where('title', 'ilike', $search)
                     ->orWhere('description', 'ilike', $search)
@@ -132,7 +132,7 @@ class MotorcycleRepository
         $safeIds = array_slice(array_unique(array_filter($ids, 'is_numeric')), 0, 3);
 
         if (empty($safeIds)) {
-            return new Collection();
+            return new Collection;
         }
 
         return Motorcycle::query()
@@ -154,4 +154,3 @@ class MotorcycleRepository
             ->paginate($perPage);
     }
 }
-

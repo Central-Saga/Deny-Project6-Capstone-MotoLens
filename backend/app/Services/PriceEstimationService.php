@@ -192,4 +192,3 @@ class PriceEstimationService
         return intdiv($numerator + intdiv($denominator, 2), $denominator);
     }
 }
-

@@ -194,4 +194,3 @@ class MotorcycleFactory extends Factory
         return mb_substr("{$model->brand} {$model->model_name} {$year} {$note} - {$area}", 0, 180);
     }
 }
-

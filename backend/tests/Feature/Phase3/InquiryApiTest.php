@@ -23,9 +23,13 @@ class InquiryApiTest extends TestCase
     use RefreshDatabase;
 
     protected User $seller;
+
     protected User $buyer;
+
     protected User $stranger;
+
     protected MotorcycleModel $model;
+
     protected Motorcycle $motorcycle;
 
     protected function setUp(): void

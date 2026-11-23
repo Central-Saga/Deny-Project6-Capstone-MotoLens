@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Motorcycle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -42,7 +43,7 @@ class InquiryResource extends JsonResource
         $motorcycle = $this->motorcycle;
         $mainPhotoUrl = null;
         if ($motorcycle && ($motorcycle->relationLoaded('media') || $motorcycle->media()->exists())) {
-            $mainPhotoUrl = $motorcycle->getFirstMediaUrl(\App\Models\Motorcycle::MEDIA_MAIN_PHOTO)
+            $mainPhotoUrl = $motorcycle->getFirstMediaUrl(Motorcycle::MEDIA_MAIN_PHOTO)
                 ?: $motorcycle->getFirstMediaUrl();
         }
 

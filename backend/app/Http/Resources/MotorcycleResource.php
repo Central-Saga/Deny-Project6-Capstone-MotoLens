@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Motorcycle;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,7 +17,7 @@ class MotorcycleResource extends JsonResource
     {
         $mainPhotoUrl = null;
         if ($this->relationLoaded('media') || $this->media()->exists()) {
-            $mainPhotoUrl = $this->getFirstMediaUrl(\App\Models\Motorcycle::MEDIA_MAIN_PHOTO);
+            $mainPhotoUrl = $this->getFirstMediaUrl(Motorcycle::MEDIA_MAIN_PHOTO);
             if (empty($mainPhotoUrl)) {
                 $mainPhotoUrl = $this->getFirstMediaUrl();
             }

@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ReportStatus : string
+enum ReportStatus: string
 {
     case Open = 'open';
     case Reviewing = 'reviewing';
@@ -15,4 +15,3 @@ enum ReportStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

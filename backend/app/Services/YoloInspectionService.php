@@ -13,7 +13,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Process;
-use RuntimeException;
 
 class YoloInspectionService
 {
@@ -114,7 +113,7 @@ class YoloInspectionService
         // Siapkan path untuk foto anotasi sementara
         $tempDir = storage_path('app/temp');
         File::ensureDirectoryExists($tempDir);
-        $annotatedTempPath = $tempDir . '/annotated_' . uniqid() . '.jpg';
+        $annotatedTempPath = $tempDir.'/annotated_'.uniqid().'.jpg';
 
         $scriptPath = base_path('scripts/yolo_infer.py');
 
@@ -149,7 +148,7 @@ class YoloInspectionService
             $jsonError = json_decode($processResult->output(), true);
             $inspection->update([
                 'inspection_status' => InspectionStatus::Failed,
-                'error_code' => $jsonError['error_code'] ?? 'INFERENCE_EXIT_CODE_' . $processResult->exitCode(),
+                'error_code' => $jsonError['error_code'] ?? 'INFERENCE_EXIT_CODE_'.$processResult->exitCode(),
                 'error_message_safe' => $jsonError['error_message'] ?? 'Inferensi AI mendeteksi anomali pada gambar.',
             ]);
 
@@ -255,6 +254,7 @@ class YoloInspectionService
             if (isset($metadata['latitude'], $metadata['longitude']) && is_numeric($metadata['latitude']) && is_numeric($metadata['longitude'])) {
                 return VerificationStatus::Submitted;
             }
+
             return VerificationStatus::Unverified;
         }
 

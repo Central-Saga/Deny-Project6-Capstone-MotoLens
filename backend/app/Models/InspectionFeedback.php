@@ -55,4 +55,3 @@ class InspectionFeedback extends Model
         return $query->where('review_status', FeedbackReviewStatus::Pending->value);
     }
 }
-

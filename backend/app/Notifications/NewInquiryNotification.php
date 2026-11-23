@@ -10,9 +10,7 @@ class NewInquiryNotification extends Notification
 {
     use Queueable;
 
-    public function __construct(public Inquiry $inquiry)
-    {
-    }
+    public function __construct(public Inquiry $inquiry) {}
 
     public function via(object $notifiable): array
     {
@@ -36,4 +34,3 @@ class NewInquiryNotification extends Notification
         ];
     }
 }
-

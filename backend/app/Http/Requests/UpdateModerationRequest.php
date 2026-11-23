@@ -28,4 +28,3 @@ class UpdateModerationRequest extends FormRequest
         ];
     }
 }
-

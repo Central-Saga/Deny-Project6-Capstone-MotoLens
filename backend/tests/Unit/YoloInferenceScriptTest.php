@@ -9,22 +9,31 @@ use PHPUnit\Framework\TestCase;
 class YoloInferenceScriptTest extends TestCase
 {
     protected string $scriptPath;
+
     protected string $modelPath;
+
     protected string $metadataPath;
+
     protected string $pythonBinary;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->scriptPath = dirname(__DIR__, 2) . '/scripts/yolo_infer.py';
-        $this->modelPath = dirname(__DIR__, 2) . '/storage/app/ml/model_damage.onnx';
-        $this->metadataPath = dirname(__DIR__, 2) . '/storage/app/ml/model_metadata.json';
+        $this->scriptPath = dirname(__DIR__, 2).'/scripts/yolo_infer.py';
+        $this->modelPath = dirname(__DIR__, 2).'/storage/app/ml/model_damage.onnx';
+        $this->metadataPath = dirname(__DIR__, 2).'/storage/app/ml/model_metadata.json';
         $envPython = getenv('ML_PYTHON_BINARY');
-        $winPython = dirname(__DIR__, 2) . '/venv/Scripts/python.exe';
-        $this->pythonBinary = ($envPython && file_exists($envPython))
-            ? $envPython
-            : (file_exists($winPython) ? $winPython : 'python3');
+        $winPython = dirname(__DIR__, 2).'/venv/Scripts/python.exe';
+        if ($envPython && (file_exists($envPython) || in_array($envPython, ['python', 'python3'], true))) {
+            $this->pythonBinary = $envPython;
+        } elseif (file_exists('/opt/venv/bin/python')) {
+            $this->pythonBinary = '/opt/venv/bin/python';
+        } elseif (file_exists($winPython)) {
+            $this->pythonBinary = $winPython;
+        } else {
+            $this->pythonBinary = 'python3';
+        }
     }
 
     public function test_model_metadata_json_matches_prd_specifications(): void
@@ -75,8 +84,8 @@ class YoloInferenceScriptTest extends TestCase
     public function test_yolo_infer_script_executes_real_inference_on_sample_image(): void
     {
         // Buat dummy image 640x640 untuk pengujian eksekusi
-        $tempImgPath = dirname(__DIR__, 2) . '/storage/app/temp_test_image.jpg';
-        $tempAnnotatedPath = dirname(__DIR__, 2) . '/storage/app/temp_annotated.jpg';
+        $tempImgPath = dirname(__DIR__, 2).'/storage/app/temp_test_image.jpg';
+        $tempAnnotatedPath = dirname(__DIR__, 2).'/storage/app/temp_annotated.jpg';
 
         $img = imagecreatetruecolor(640, 640);
         $bgColor = imagecolorallocate($img, 120, 130, 140);
@@ -104,7 +113,7 @@ class YoloInferenceScriptTest extends TestCase
             File::delete($tempAnnotatedPath);
         }
 
-        $this->assertTrue($result->successful(), 'Script inferensi harus berhasil dieksekusi: ' . $result->errorOutput());
+        $this->assertTrue($result->successful(), 'Script inferensi harus berhasil dieksekusi: '.$result->errorOutput());
 
         $json = json_decode($result->output(), true);
         $this->assertIsArray($json, 'Output harus berupa JSON murni.');
@@ -119,4 +128,3 @@ class YoloInferenceScriptTest extends TestCase
         $this->assertIsArray($json['detections']);
     }
 }
-

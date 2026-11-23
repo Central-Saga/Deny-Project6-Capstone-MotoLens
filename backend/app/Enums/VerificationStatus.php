@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum VerificationStatus : string
+enum VerificationStatus: string
 {
     case Unverified = 'unverified';
     case Submitted = 'submitted';
@@ -15,4 +15,3 @@ enum VerificationStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

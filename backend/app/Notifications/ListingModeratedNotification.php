@@ -2,6 +2,4 @@
 
 namespace App\Notifications;
 
-class ListingModeratedNotification extends MotorcycleModerationNotification
-{
-}
+class ListingModeratedNotification extends MotorcycleModerationNotification {}

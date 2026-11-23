@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum TaxStatus : string
+enum TaxStatus: string
 {
     case Active = 'active';
     case Expired = 'expired';
@@ -13,4 +13,3 @@ enum TaxStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

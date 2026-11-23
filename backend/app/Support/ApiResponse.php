@@ -10,11 +10,7 @@ class ApiResponse
     /**
      * Format standard success response.
      *
-     * @param  mixed  $data
-     * @param  string  $message
-     * @param  int  $statusCode
      * @param  array<string, mixed>  $meta
-     * @return JsonResponse
      */
     public static function success(
         mixed $data = null,
@@ -25,8 +21,8 @@ class ApiResponse
         $response = [
             'success' => true,
             'message' => $message,
-            'data' => $data ?? new \stdClass(),
-            'meta' => empty($meta) ? new \stdClass() : $meta,
+            'data' => $data ?? new \stdClass,
+            'meta' => empty($meta) ? new \stdClass : $meta,
         ];
 
         return response()->json($response, $statusCode);
@@ -35,10 +31,7 @@ class ApiResponse
     /**
      * Format standard created response (201).
      *
-     * @param  mixed  $data
-     * @param  string  $message
      * @param  array<string, mixed>  $meta
-     * @return JsonResponse
      */
     public static function created(
         mixed $data = null,
@@ -50,11 +43,6 @@ class ApiResponse
 
     /**
      * Format standard error response.
-     *
-     * @param  string  $message
-     * @param  int  $statusCode
-     * @param  mixed  $errors
-     * @return JsonResponse
      */
     public static function error(
         string $message = 'Terjadi kesalahan.',
@@ -63,9 +51,9 @@ class ApiResponse
     ): JsonResponse {
         $formattedErrors = null;
         if ($errors !== null) {
-            $formattedErrors = is_array($errors) && empty($errors) ? new \stdClass() : $errors;
+            $formattedErrors = is_array($errors) && empty($errors) ? new \stdClass : $errors;
         } else {
-            $formattedErrors = new \stdClass();
+            $formattedErrors = new \stdClass;
         }
 
         $response = [

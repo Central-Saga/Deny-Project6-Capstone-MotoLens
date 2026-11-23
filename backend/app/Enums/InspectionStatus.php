@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum InspectionStatus : string
+enum InspectionStatus: string
 {
     case Pending = 'pending';
     case Processing = 'processing';
@@ -16,4 +16,3 @@ enum InspectionStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

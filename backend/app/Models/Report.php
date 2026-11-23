@@ -48,4 +48,3 @@ class Report extends Model
         return $query->where('status', ReportStatus::Open->value);
     }
 }
-

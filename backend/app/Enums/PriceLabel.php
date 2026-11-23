@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum PriceLabel : string
+enum PriceLabel: string
 {
     case GoodDeal = 'good_deal';
     case FairPrice = 'fair_price';
@@ -14,4 +14,3 @@ enum PriceLabel : string
         return array_column(self::cases(), 'value');
     }
 }
-

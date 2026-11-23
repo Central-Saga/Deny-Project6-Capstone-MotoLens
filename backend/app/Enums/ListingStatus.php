@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ListingStatus : string
+enum ListingStatus: string
 {
     case Available = 'available';
     case Booked = 'booked';
@@ -14,4 +14,3 @@ enum ListingStatus : string
         return array_column(self::cases(), 'value');
     }
 }
-

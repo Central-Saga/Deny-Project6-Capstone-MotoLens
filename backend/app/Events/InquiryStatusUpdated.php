@@ -17,7 +17,5 @@ class InquiryStatusUpdated
         public InquiryStatus $oldStatus,
         public InquiryStatus $newStatus,
         public string $actorRole = 'seller'
-    ) {
-    }
+    ) {}
 }
-

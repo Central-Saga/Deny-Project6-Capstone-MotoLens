@@ -28,4 +28,3 @@ class InspectionFeedbackFactory extends Factory
         ];
     }
 }
-

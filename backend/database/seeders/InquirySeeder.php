@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\ListingStatus;
-use App\Enums\ModerationStatus;
 use App\Models\Inquiry;
 use App\Models\Motorcycle;
 use App\Models\User;
@@ -93,4 +92,3 @@ class InquirySeeder extends Seeder
         ]);
     }
 }
-

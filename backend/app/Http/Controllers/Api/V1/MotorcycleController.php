@@ -27,9 +27,7 @@ class MotorcycleController extends Controller
 {
     use ApiResponseTrait;
 
-    public function __construct(protected PriceEstimationService $priceService)
-    {
-    }
+    public function __construct(protected PriceEstimationService $priceService) {}
 
     /**
      * Katalog listing publik (approved only) dengan filter lengkap & paginasi.

@@ -22,4 +22,3 @@ class UpdateMotorcycleRequest extends FormRequest
         ];
     }
 }
-

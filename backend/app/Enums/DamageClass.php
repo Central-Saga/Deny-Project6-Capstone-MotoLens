@@ -51,4 +51,3 @@ enum DamageClass: string
         throw new \InvalidArgumentException("Indeks kelas tidak dikenal: {$index}");
     }
 }
-

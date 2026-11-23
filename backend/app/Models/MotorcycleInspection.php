@@ -161,4 +161,3 @@ class MotorcycleInspection extends Model implements HasMedia
             ->dontSubmitEmptyLogs();
     }
 }
-

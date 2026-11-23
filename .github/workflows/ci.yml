@@ -1,0 +1,119 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend-test-and-lint:
+    name: Backend Tests & Laravel Pint
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: motolens_test
+          POSTGRES_PASSWORD: motolens_ci_secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d motolens_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, redis, gd, exif, mbstring, xml, bcmath, intl, zip
+          coverage: none
+
+      - name: Setup Python 3.11 for YOLOv8 ONNX Inference
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python ONNX Runtime Dependencies
+        run: python -m pip install --no-cache-dir onnxruntime opencv-python-headless numpy
+
+      - name: Install Composer Dependencies
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare Environment & Generate Dynamic APP_KEY
+        working-directory: backend
+        run: |
+          mkdir -p storage/app/temp
+          cp .env.example .env
+          sed -i 's|^DB_DATABASE=.*|DB_DATABASE=motolens_test|' .env
+          sed -i 's|^DB_PASSWORD=.*|DB_PASSWORD=motolens_ci_secret|' .env
+          sed -i 's|^ML_PYTHON_BINARY=.*|ML_PYTHON_BINARY=python3|' .env
+          php artisan key:generate --ansi
+
+      - name: Run Laravel Pint Code Style Check
+        working-directory: backend
+        run: ./vendor/bin/pint --test
+
+      - name: Run Backend Test Suite (18 Files / 118 Tests)
+        working-directory: backend
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: motolens_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: motolens_ci_secret
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+          CACHE_STORE: array
+          ML_PYTHON_BINARY: python3
+        run: php artisan test
+
+  frontend-build:
+    name: Frontend TypeScript & Next.js Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run TypeScript Compiler Check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Build Next.js 16 Production Bundle
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+        run: npm run build

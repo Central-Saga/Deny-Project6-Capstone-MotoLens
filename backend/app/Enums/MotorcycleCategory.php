@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum MotorcycleCategory : string
+enum MotorcycleCategory: string
 {
     case Matic = 'matic';
     case Sport = 'sport';
@@ -15,4 +15,3 @@ enum MotorcycleCategory : string
         return array_column(self::cases(), 'value');
     }
 }
-

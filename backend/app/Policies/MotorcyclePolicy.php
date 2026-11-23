@@ -65,4 +65,3 @@ class MotorcyclePolicy
         return $user->hasRole('admin');
     }
 }
-

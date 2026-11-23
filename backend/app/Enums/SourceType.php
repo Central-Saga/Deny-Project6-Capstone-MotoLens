@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum SourceType : string
+enum SourceType: string
 {
     case AndroidCamera = 'android_camera';
     case WebUpload = 'web_upload';
@@ -14,4 +14,3 @@ enum SourceType : string
         return array_column(self::cases(), 'value');
     }
 }
-
