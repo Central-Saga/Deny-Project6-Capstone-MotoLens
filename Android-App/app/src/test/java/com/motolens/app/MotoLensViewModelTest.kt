@@ -41,5 +41,9 @@ class MotoLensViewModelTest {
         assertEquals("Fair Price (Harga Wajar)", Formatters.formatPriceLabelText("fair_price"))
         assertEquals("Overpriced (Di Atas Pasar)", Formatters.formatPriceLabelText("overpriced"))
         assertEquals("Kamera Android Terverifikasi", Formatters.formatSourceBadgeText("android_camera", true))
+        assertEquals("6281200000001", Formatters.formatWhatsappPhone("081200000001"))
+        val waUrl = Formatters.buildWhatsAppSurveyUrl("081200000001", "Honda PCX 160", "2026-12-01 10:00")
+        assertNotNull(waUrl)
+        assertTrue(waUrl!!.startsWith("https://wa.me/6281200000001?text="))
     }
 }

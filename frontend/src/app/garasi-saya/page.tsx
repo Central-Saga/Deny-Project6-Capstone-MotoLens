@@ -13,6 +13,7 @@ import {
   Heart,
   LayoutDashboard,
   Loader2,
+  MessageCircle,
   Plus,
   ShieldAlert,
   ShieldCheck,
@@ -33,7 +34,11 @@ import { useAuth } from '@/hooks/useAuth';
 import { PriceBadge } from '@/components/shared/PriceBadge';
 import { MotorcycleCard } from '@/components/features/MotorcycleCard';
 import { EmptyState } from '@/components/shared/StateFeedback';
-import { formatCurrency, formatDateTimeWita } from '@/utils/formatters';
+import {
+  formatCurrency,
+  formatDateTimeWita,
+  formatWhatsAppUrl,
+} from '@/utils/formatters';
 
 type GarageTab =
   | 'overview'
@@ -736,17 +741,39 @@ function GarageContent() {
                       </>
                     )}
 
-                    {inq.status === 'accepted' && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleSellerInquiryAction(inq.id, 'completed')
-                        }
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                        <span>Selesaikan Transaksi</span>
-                      </button>
+                    {(inq.status === 'accepted' ||
+                      (inq.status as string) === 'approved') && (
+                      <>
+                        {formatWhatsAppUrl(
+                          inq.buyer?.phone || inq.buyer?.phone_whatsapp,
+                          `Halo ${inq.buyer?.name || 'Kak'}, jadwal survei motor "${inq.motorcycle?.title || `#${inq.motorcycle_id}`}" pada ${formatDateTimeWita(inq.appointment_date)} telah saya setujui di MotoLens. Mari koordinasi lokasi COD.`
+                        ) && (
+                          <a
+                            href={
+                              formatWhatsAppUrl(
+                                inq.buyer?.phone || inq.buyer?.phone_whatsapp,
+                                `Halo ${inq.buyer?.name || 'Kak'}, jadwal survei motor "${inq.motorcycle?.title || `#${inq.motorcycle_id}`}" pada ${formatDateTimeWita(inq.appointment_date)} telah saya setujui di MotoLens. Mari koordinasi lokasi COD.`
+                              )!
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-xs"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>Hubungi via WhatsApp</span>
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleSellerInquiryAction(inq.id, 'completed')
+                          }
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Selesaikan Transaksi</span>
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -832,7 +859,29 @@ function GarageContent() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {(inq.status === 'accepted' ||
+                      (inq.status as string) === 'approved') &&
+                      formatWhatsAppUrl(
+                        inq.seller?.phone || inq.seller?.phone_whatsapp,
+                        `Halo ${inq.seller?.name || 'Penjual'}, jadwal survei saya untuk motor "${inq.motorcycle?.title || `#${inq.motorcycle_id}`}" pada ${formatDateTimeWita(inq.appointment_date)} sudah disetujui di MotoLens. Mohon share titik temu survei.`
+                      ) && (
+                        <a
+                          href={
+                            formatWhatsAppUrl(
+                              inq.seller?.phone || inq.seller?.phone_whatsapp,
+                              `Halo ${inq.seller?.name || 'Penjual'}, jadwal survei saya untuk motor "${inq.motorcycle?.title || `#${inq.motorcycle_id}`}" pada ${formatDateTimeWita(inq.appointment_date)} sudah disetujui di MotoLens. Mohon share titik temu survei.`
+                            )!
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition shadow-xs"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>Hubungi via WhatsApp</span>
+                        </a>
+                      )}
+
                     <Link
                       href={`/motorcycles/${inq.motorcycle_id}`}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition"

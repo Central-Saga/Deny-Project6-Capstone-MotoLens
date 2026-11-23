@@ -16,11 +16,13 @@ export interface InquiryItem {
   buyer: {
     id: number;
     name: string;
+    phone?: string | null;
     phone_whatsapp: string | null;
   };
   seller: {
     id: number;
     name: string;
+    phone?: string | null;
     phone_whatsapp: string | null;
   };
   appointment_date: string;

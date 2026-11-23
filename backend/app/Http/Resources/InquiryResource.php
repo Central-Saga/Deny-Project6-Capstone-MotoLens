@@ -8,6 +8,31 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class InquiryResource extends JsonResource
 {
     /**
+     * Format nomor telepon lokal Indonesia (08xxx / +628xxx) menjadi format WhatsApp internasional (628xxx).
+     */
+    public static function formatWhatsappPhone(?string $phone): ?string
+    {
+        if (! $phone) {
+            return null;
+        }
+
+        $digits = preg_replace('/[^0-9]/', '', $phone);
+        if (! $digits) {
+            return null;
+        }
+
+        if (str_starts_with($digits, '0')) {
+            return '62'.substr($digits, 1);
+        }
+
+        if (! str_starts_with($digits, '62')) {
+            return '62'.$digits;
+        }
+
+        return $digits;
+    }
+
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
@@ -20,6 +45,9 @@ class InquiryResource extends JsonResource
             $mainPhotoUrl = $motorcycle->getFirstMediaUrl(\App\Models\Motorcycle::MEDIA_MAIN_PHOTO)
                 ?: $motorcycle->getFirstMediaUrl();
         }
+
+        $buyerRawPhone = $this->buyer?->phone_whatsapp;
+        $sellerRawPhone = $motorcycle?->seller?->phone_whatsapp;
 
         return [
             'id' => $this->id,
@@ -37,12 +65,14 @@ class InquiryResource extends JsonResource
             'buyer' => [
                 'id' => $this->buyer?->id,
                 'name' => $this->buyer?->name,
-                'phone_whatsapp' => $this->buyer?->phone_whatsapp,
+                'phone' => self::formatWhatsappPhone($buyerRawPhone),
+                'phone_whatsapp' => $buyerRawPhone,
             ],
             'seller' => [
                 'id' => $motorcycle?->seller?->id,
                 'name' => $motorcycle?->seller?->name,
-                'phone_whatsapp' => $motorcycle?->seller?->phone_whatsapp,
+                'phone' => self::formatWhatsappPhone($sellerRawPhone),
+                'phone_whatsapp' => $sellerRawPhone,
             ],
             'appointment_date' => $this->appointment_date?->toISOString(),
             'offered_price' => $this->offered_price,

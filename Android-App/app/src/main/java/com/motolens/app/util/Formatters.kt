@@ -53,6 +53,34 @@ object Formatters {
     }
 
     /**
+     * Converts Indonesian local phone numbers (`08xxx` / `+628xxx`) to international `628xxx` format.
+     */
+    fun formatWhatsappPhone(rawPhone: String?): String? {
+        if (rawPhone.isNullOrBlank()) return null
+        val digits = rawPhone.replace(Regex("[^0-9]"), "")
+        if (digits.isEmpty()) return null
+        return when {
+            digits.startsWith("0") -> "62" + digits.substring(1)
+            !digits.startsWith("62") -> "62$digits"
+            else -> digits
+        }
+    }
+
+    /**
+     * Builds a `https://wa.me/{phone}?text=...` link for an approved/accepted survey inquiry.
+     */
+    fun buildWhatsAppSurveyUrl(
+        rawPhone: String?,
+        motorTitle: String,
+        appointmentDate: String
+    ): String? {
+        val formattedPhone = formatWhatsappPhone(rawPhone) ?: return null
+        val message = "Halo, jadwal survei motor \"$motorTitle\" pada $appointmentDate telah disetujui di MotoLens. Mari koordinasi lokasi survei/COD."
+        val encodedText = java.net.URLEncoder.encode(message, "UTF-8")
+        return "https://wa.me/$formattedPhone?text=$encodedText"
+    }
+
+    /**
      * Ensures Base URL ends with `/api/v1/` and has a valid http/https scheme.
      */
     fun normalizeBaseUrl(rawUrl: String): String {

@@ -32,14 +32,20 @@ class UserSeeder extends Seeder
 
         $admin = User::firstOrCreate(
             ['email' => self::ADMIN_EMAIL],
-            ['name' => 'Admin MotoLens', 'password' => $adminPassword, 'email_verified_at' => now()],
+            ['name' => 'Admin MotoLens', 'password' => $adminPassword, 'phone_whatsapp' => '081236009999', 'email_verified_at' => now()],
         );
+        if (! $admin->phone_whatsapp) {
+            $admin->update(['phone_whatsapp' => '081236009999']);
+        }
         $admin->syncRoles(['admin']);
 
         $demo = User::firstOrCreate(
             ['email' => self::USER_EMAIL],
             ['name' => 'Demo User', 'password' => $userPassword, 'phone_whatsapp' => '081200000000', 'email_verified_at' => now()],
         );
+        if (! $demo->phone_whatsapp) {
+            $demo->update(['phone_whatsapp' => '081200000000']);
+        }
         $demo->syncRoles(['user']);
 
         foreach (self::EXTRA_USERS as $row) {

@@ -310,6 +310,7 @@ data class InquiryMotorcycleSummaryDto(
 data class InquiryPartyDto(
     @SerializedName("id") val id: Int = 0,
     @SerializedName("name") val name: String = "",
+    @SerializedName("phone") val phone: String? = null,
     @SerializedName("phone_whatsapp") val phoneWhatsapp: String? = null
 )
 

@@ -15,7 +15,7 @@ class UpdateInquiryStatusRequest extends FormRequest
     {
         if ($this->has('status')) {
             $status = strtolower($this->status);
-            if ($status === 'confirmed') {
+            if ($status === 'confirmed' || $status === 'approved') {
                 $status = 'accepted';
             }
             $this->merge(['status' => $status]);

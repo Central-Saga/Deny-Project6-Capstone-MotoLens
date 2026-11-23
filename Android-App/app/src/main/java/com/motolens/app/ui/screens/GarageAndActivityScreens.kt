@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -405,6 +406,41 @@ private fun InquiryCard(
                     fontSize = 11.sp,
                     color = ZincTextSecondary
                 )
+            }
+
+            val uriHandler = LocalUriHandler.current
+            val isApprovedStatus = inq.status.equals("accepted", ignoreCase = true) ||
+                inq.status.equals("approved", ignoreCase = true)
+            val contactPhone = if (isSellerView) {
+                inq.buyer?.phone ?: inq.buyer?.phoneWhatsapp
+            } else {
+                inq.seller?.phone ?: inq.seller?.phoneWhatsapp
+            }
+            val waUrl = Formatters.buildWhatsAppSurveyUrl(
+                rawPhone = contactPhone,
+                motorTitle = inq.motorcycle?.title ?: "Motor #${inq.motorcycleId}",
+                appointmentDate = inq.appointmentDate
+            )
+
+            if (isApprovedStatus && waUrl != null) {
+                Button(
+                    onClick = { uriHandler.openUri(waUrl) },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF16A34A)),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Chat,
+                        contentDescription = null,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Hubungi via WhatsApp",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                }
             }
 
             if (isSellerView && inq.status == "pending") {

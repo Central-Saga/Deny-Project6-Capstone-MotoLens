@@ -120,39 +120,19 @@ fun LoginScreen(
                     fontWeight = FontWeight.Black,
                     color = CrimsonRedPrimary
                 )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Button(
+                    onClick = {
+                        email = "user@motolens.id"
+                        password = "Password123!"
+                        onLogin("user@motolens.id", "Password123!")
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = CarbonBlack),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Button(
-                        onClick = {
-                            email = "user@motolens.id"
-                            password = "Password123!"
-                            onLogin("user@motolens.id", "Password123!")
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = CarbonBlack),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Demo User", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = {
-                            email = "admin@motolens.id"
-                            password = "Password123!"
-                            onLogin("admin@motolens.id", "Password123!")
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = CrimsonRedPrimary),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(Icons.Default.AdminPanelSettings, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Demo Admin", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                    }
+                    Icon(Icons.Default.Person, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Demo User (user@motolens.id)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
