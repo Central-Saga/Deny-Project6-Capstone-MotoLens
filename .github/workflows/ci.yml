@@ -10,6 +10,8 @@ jobs:
   backend-test-and-lint:
     name: Backend Tests & Laravel Pint
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     services:
       postgres:
@@ -54,6 +56,28 @@ jobs:
 
       - name: Install Python ONNX Runtime Dependencies
         run: python -m pip install --no-cache-dir onnxruntime opencv-python-headless numpy
+
+      - name: Verify Notebook Is Stripped (< 100 KB & 0 Cell Outputs)
+        run: |
+          python -c "
+          import json, os, sys
+          nb_path = 'ML/MotoLens_YOLOv8_Training.ipynb'
+          size_kb = os.path.getsize(nb_path) / 1024
+          nb = json.load(open(nb_path, encoding='utf-8'))
+          outputs = sum(len(c.get('outputs', [])) for c in nb.get('cells', []))
+          print(f'Notebook size: {size_kb:.2f} KB, Total outputs: {outputs}')
+          if size_kb >= 100 or outputs > 0:
+              sys.exit('ERROR: Notebook must be < 100 KB and contain 0 cell outputs!')
+          "
+
+      - name: Download Canonical ONNX Model from GitHub Release v1.0.1 & Verify SHA-256
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXPECTED_SHA256: 22ec0d55bdb32939ae8ca5cd4bb1207ab8576f4775f8c5e32359ceb81ab49edd
+        run: |
+          mkdir -p backend/storage/app/ml
+          gh release download v1.0.1 --pattern "model_damage.onnx" --dir backend/storage/app/ml --clobber
+          echo "${EXPECTED_SHA256}  backend/storage/app/ml/model_damage.onnx" | sha256sum -c -
 
       - name: Install Composer Dependencies
         working-directory: backend

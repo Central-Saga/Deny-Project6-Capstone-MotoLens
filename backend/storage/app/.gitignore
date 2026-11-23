@@ -2,6 +2,7 @@
 !private/
 !public/
 !ml/
-!ml/**
+!ml/model_metadata.json
+ml/*.onnx
 !.gitignore
 

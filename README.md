@@ -18,13 +18,15 @@ motolens/
 ├── backend/              # REST API Laravel 13 (/api/v1), Sanctum Auth, Spatie Media/Permission/Activitylog, & Python ONNX Runner
 ├── frontend/             # Web Marketplace & Admin Backoffice (Next.js 16 App Router, TypeScript, Tailwind CSS)
 ├── Android-App/          # Aplikasi Mobile Inspeksi Lapangan (Kotlin, Jetpack Compose Material 3, MVVM, CameraX Live Scanner)
-├── ML/                   # Artefak Model YOLOv8n ONNX (model_damage.onnx, model_metadata.json, yolo_infer.py, evaluasi & notebook)
+├── ML/                   # Pipeline Training & Evaluasi YOLOv8n (MotoLens_YOLOv8_Training.ipynb [stripped], model_metadata.json, yolo_infer.py, evaluation/metrics.json)
 ├── docs/                 # Dokumentasi Teknis & Panduan Sidang:
 │   ├── PRD.md            # Product Requirements Document (MotoLens_PRD_v2.0.1.md)
 │   ├── API_CONTRACT.md   # Spesifikasi Kontrak REST API /api/v1
 │   ├── ML_MODEL_CARD.md  # Dokumentasi Metrik & Batasan Model YOLOv8n ONNX
+│   ├── ML_TRAINING_REPORT.md # Laporan Lengkap Ekstraksi Metrik Training & Panduan Checksum ONNX
 │   └── DEMO_GUIDE.md     # Panduan Persiapan & Skenario Demo Live Sidang Capstone
 ├── .env.example          # Template konfigurasi environment Docker Compose (tanpa rahasia)
+├── .pre-commit-config.yaml # Hook nbstripout otomatis untuk menjaga notebook tetap bersih dari output
 └── docker-compose.yml    # Orkestrasi Full-Stack 4 Container (PostgreSQL 16, Redis 7, Backend Port 8000, Frontend Port 3000)
 ```
 
@@ -50,7 +52,34 @@ Buka file `.env` dan pastikan variabel berikut terisi:
    ```
    Tempelkan hasilnya ke `APP_KEY=` di dalam file `.env`.
 
-### Langkah 2: Nyalakan Container & Seeder Data Demo
+### Langkah 2: Unduh Artefak Model Kanonis `model_damage.onnx` (Jika Baru Clone Repo)
+File biner `model_damage.onnx` (~12,18 MB) didistribusikan melalui **GitHub Release `v1.0.1`** (tidak di-*commit* ke dalam Git agar repositori tetap ringan) dan disimpan di satu lokasi kanonis: **`backend/storage/app/ml/model_damage.onnx`**.
+
+```bash
+# Unduh via GitHub CLI (gh):
+gh release download v1.0.1 \
+  --repo Central-Saga/Deny-Project6-Capstone-MotoLens \
+  --pattern "model_damage.onnx" \
+  --dir backend/storage/app/ml \
+  --clobber
+
+# Atau unduh langsung via curl:
+curl.exe -fL \
+  https://github.com/Central-Saga/Deny-Project6-Capstone-MotoLens/releases/download/v1.0.1/model_damage.onnx \
+  -o backend/storage/app/ml/model_damage.onnx
+```
+
+Verifikasi integritas SHA-256 (`22ec0d55bdb32939ae8ca5cd4bb1207ab8576f4775f8c5e32359ceb81ab49edd`):
+```powershell
+# PowerShell (Windows):
+(Get-FileHash backend/storage/app/ml/model_damage.onnx -Algorithm SHA256).Hash.ToLower()
+
+# Bash (Linux / macOS):
+echo "22ec0d55bdb32939ae8ca5cd4bb1207ab8576f4775f8c5e32359ceb81ab49edd  backend/storage/app/ml/model_damage.onnx" | sha256sum -c -
+```
+> Untuk laporan lengkap metrik training (Baseline vs Tuned v1 vs Optimized v2) serta panduan mereproduksi model dari [`ML/MotoLens_YOLOv8_Training.ipynb`](ML/MotoLens_YOLOv8_Training.ipynb), lihat **[`docs/ML_TRAINING_REPORT.md`](docs/ML_TRAINING_REPORT.md)**.
+
+### Langkah 3: Nyalakan Container & Seeder Data Demo
 ```bash
 docker compose up -d --build
 docker compose exec backend php artisan db:seed --force
