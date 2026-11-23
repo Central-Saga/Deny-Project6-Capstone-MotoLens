@@ -65,9 +65,13 @@ Android-App/local.properties
 .DS_Store
 Thumbs.db
 
-# Ensure ML artifacts are explicitly tracked
+# Ensure ML scripts, metadata, and clean notebooks are tracked
 !ML/
 !ML/**
 !backend/storage/app/ml/
-!backend/storage/app/ml/**
+!backend/storage/app/ml/model_metadata.json
+
+# ML Binary Artifacts (Canonical model_damage.onnx is distributed via GitHub Release v1.0.1)
+*.onnx
+*.pt
 

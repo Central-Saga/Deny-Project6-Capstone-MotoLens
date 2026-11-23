@@ -18,7 +18,19 @@ cp .env.example .env
   ```
 - **Catatan Keamanan Infrastruktur:** Port PostgreSQL (`5432`) dan Redis (`6379`) diisolasi di dalam jaringan internal Docker Compose dan tidak dipublish ke host. Service `backend` berjalan dengan profil aman `APP_ENV=production` dan `APP_DEBUG=false`.
 
-### Langkah 2: Nyalakan Container Full-Stack Docker
+### Langkah 2: Pastikan Artefak Model Kanonis `model_damage.onnx` Tersedia & Valid
+File biner `model_damage.onnx` tidak di-track di Git, melainkan ditempatkan di lokasi kanonis `backend/storage/app/ml/model_damage.onnx` (diunduh dari **GitHub Release `v1.0.1`**):
+```bash
+# Unduh jika file belum ada di backend/storage/app/ml/model_damage.onnx:
+gh release download v1.0.1 --repo Central-Saga/Deny-Project6-Capstone-MotoLens --pattern "model_damage.onnx" --dir backend/storage/app/ml --clobber
+```
+Verifikasi checksum SHA-256 (`22ec0d55bdb32939ae8ca5cd4bb1207ab8576f4775f8c5e32359ceb81ab49edd`):
+```powershell
+(Get-FileHash backend/storage/app/ml/model_damage.onnx -Algorithm SHA256).Hash.ToLower()
+```
+*(Detail metrik training & reproduksi dari notebook dapat dilihat pada [`docs/ML_TRAINING_REPORT.md`](ML_TRAINING_REPORT.md)).*
+
+### Langkah 3: Nyalakan Container Full-Stack Docker
 Buka terminal di root folder `motolens/` dan jalankan:
 ```bash
 docker compose up -d
@@ -26,14 +38,14 @@ docker compose ps
 ```
 Pastikan keempat container (`motolens-postgres`, `motolens-redis`, `motolens-backend`, `motolens-frontend`) berstatus **Up / Healthy**.
 
-### Langkah 3: Verifikasi Kesehatan Backend & Model YOLOv8 ONNX
+### Langkah 4: Verifikasi Kesehatan Backend & Model YOLOv8 ONNX
 Buka atau jalankan di terminal:
 ```bash
 curl.exe -s http://localhost:8000/api/v1/health
 ```
 Pastikan output JSON menampilkan `"status": "healthy"`, `"database": "connected"`, `"ml_model": "available"`, dan `"python": "available"`.
 
-### Langkah 4: Hubungkan HP Android Fisik ke Backend Laptop
+### Langkah 5: Hubungkan HP Android Fisik ke Backend Laptop
 Pilih **salah satu** dari dua metode paling stabil berikut:
 
 - **Opsi A — Kabel USB dengan ADB Reverse (Paling Stabil, Bebas Masalah Wi-Fi/Firewall):**
