@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\InspectionStatus;
 use App\Enums\SourceType;
 use App\Enums\VerificationStatus;
+use App\Http\Controllers\Api\V1\AdminController;
 use Database\Factories\MotorcycleInspectionFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,17 @@ class MotorcycleInspection extends Model implements HasMedia
     public const MEDIA_ANNOTATED_PHOTO = 'annotated_photo';
 
     protected $table = 'motorcycle_inspections';
+
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            AdminController::invalidateDashboardCache();
+        });
+
+        static::deleted(function (): void {
+            AdminController::invalidateDashboardCache();
+        });
+    }
 
     protected $fillable = [
         'motorcycle_id',

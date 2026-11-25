@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Redis;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Process\Process;
 
@@ -38,18 +39,32 @@ class HealthController extends Controller
             ];
         }
 
-        // 2. Cache Check (Redis / File / Array)
+        // 2. Cache & Redis Connectivity Check
+        $cacheStore = (string) config('cache.default');
         try {
-            Cache::put('health_check_ping', 'pong', 10);
+            Cache::put('health_check_ping', 'pong', 60);
             $pong = Cache::get('health_check_ping');
+            $redisConnected = true;
+
+            if ($cacheStore === 'redis') {
+                $pingResult = Redis::connection()->ping();
+                $redisConnected = $pingResult === true || str_contains(strtolower((string) $pingResult), 'pong');
+            }
+
+            $isCacheHealthy = ($pong === 'pong') && $redisConnected;
+            if (! $isCacheHealthy) {
+                $status = 'unhealthy';
+            }
+
             $checks['cache'] = [
-                'status' => $pong === 'pong' ? 'connected' : 'degraded',
-                'store' => config('cache.default'),
+                'status' => $isCacheHealthy ? 'connected' : 'degraded',
+                'store' => $cacheStore,
             ];
         } catch (\Throwable $e) {
+            $status = 'unhealthy';
             $checks['cache'] = [
                 'status' => 'disconnected',
-                'store' => config('cache.default'),
+                'store' => $cacheStore,
             ];
         }
 

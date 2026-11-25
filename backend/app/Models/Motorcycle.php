@@ -8,6 +8,7 @@ use App\Enums\ModerationStatus;
 use App\Enums\PriceLabel;
 use App\Enums\TaxStatus;
 use App\Enums\VerificationStatus;
+use App\Http\Controllers\Api\V1\AdminController;
 use Database\Factories\MotorcycleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,17 @@ class Motorcycle extends Model implements HasMedia
     public const MEDIA_ANGLE_PHOTOS = 'angle_photos';
 
     public const MEDIA_DAMAGE_DETAILS = 'damage_details';
+
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            AdminController::invalidateDashboardCache();
+        });
+
+        static::deleted(function (): void {
+            AdminController::invalidateDashboardCache();
+        });
+    }
 
     /**
      * Kolom hasil kalkulasi/inspeksi (base_depreciated_price, ml_predicted_price,

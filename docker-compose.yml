@@ -52,6 +52,8 @@ services:
       - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_CACHE_DB=0
       - CACHE_STORE=redis
       - ML_PYTHON_BINARY=/opt/venv/bin/python
       - ML_MODEL_PATH=/var/www/html/storage/app/ml/model_damage.onnx

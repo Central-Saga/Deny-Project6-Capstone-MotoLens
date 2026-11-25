@@ -141,3 +141,30 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
         run: npm run build
+
+  android-tests:
+    name: Android Unit Tests & Debug Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle & Dependency Cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Run Android JUnit Test Suite
+        working-directory: Android-App
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Assemble Android Debug APK
+        working-directory: Android-App
+        run: ./gradlew assembleDebug --stacktrace

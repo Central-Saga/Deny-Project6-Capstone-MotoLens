@@ -2,16 +2,23 @@
 
 namespace Tests\Feature\Phase3;
 
+use App\Enums\InspectionStatus;
 use App\Enums\ListingStatus;
 use App\Enums\ModerationStatus;
 use App\Enums\PriceLabel;
+use App\Enums\SourceType;
 use App\Enums\TaxStatus;
+use App\Enums\VerificationStatus;
+use App\Http\Controllers\Api\V1\AdminController;
 use App\Models\Motorcycle;
+use App\Models\MotorcycleInspection;
 use App\Models\MotorcycleModel;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
@@ -250,5 +257,115 @@ class AdminApiTest extends TestCase
         $this->assertSame('[REDACTED]', $props['password']);
         $this->assertSame('[REDACTED]', $props['token']);
         $this->assertSame('update_profile', $props['action']);
+    }
+
+    public function test_admin_dashboard_and_metrics_are_cached_and_invalidated_when_inspection_changes(): void
+    {
+        Cache::flush();
+
+        $adminToken = $this->admin->createToken('admin_token')->plainTextToken;
+
+        $this->assertFalse(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+        $this->assertFalse(Cache::has(AdminController::CACHE_KEY_INSPECTION_METRICS));
+
+        // 1. Pembacaan pertama mengisi cache dashboard & metrik inspeksi
+        $firstDashboard = $this->withHeader('Authorization', "Bearer {$adminToken}")
+            ->getJson('/api/v1/admin/dashboard');
+
+        $firstDashboard->assertStatus(200)
+            ->assertJsonPath('data.overview.total_inspections', 0)
+            ->assertJsonPath('data.damage_detection_stats.total_scratches', 0);
+
+        $firstMetrics = $this->withHeader('Authorization', "Bearer {$adminToken}")
+            ->getJson('/api/v1/admin/inspections/metrics');
+
+        $firstMetrics->assertStatus(200)
+            ->assertJsonPath('data.total_inspections', 0);
+
+        $this->assertTrue(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+        $this->assertTrue(Cache::has(AdminController::CACHE_KEY_INSPECTION_METRICS));
+
+        // 2. Saat inspeksi baru dibuat, cache otomatis ter-invalidate (Cache::forget)
+        $inspection = MotorcycleInspection::create([
+            'user_id' => $this->regularUser->id,
+            'model_name' => 'model_damage',
+            'model_version' => 'optimized_v2',
+            'confidence_threshold' => 0.35,
+            'nms_iou_threshold' => 0.45,
+            'source_type' => SourceType::AndroidCamera,
+            'inspection_status' => InspectionStatus::Completed,
+            'verification_status' => VerificationStatus::Submitted,
+            'scratch_count' => 2,
+            'dent_count' => 1,
+            'accident_count' => 0,
+            'total_damages_detected' => 3,
+            'average_confidence' => 0.845,
+            'inference_time_ms' => 142,
+        ]);
+
+        $this->assertFalse(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+        $this->assertFalse(Cache::has(AdminController::CACHE_KEY_INSPECTION_METRICS));
+
+        // 3. Pembacaan berikutnya memuat data terbaru dan mengisi ulang cache
+        $secondDashboard = $this->withHeader('Authorization', "Bearer {$adminToken}")
+            ->getJson('/api/v1/admin/dashboard');
+
+        $secondDashboard->assertStatus(200)
+            ->assertJsonPath('data.overview.total_inspections', 1)
+            ->assertJsonPath('data.damage_detection_stats.total_scratches', 2)
+            ->assertJsonPath('data.damage_detection_stats.total_dents', 1);
+
+        $this->assertTrue(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+
+        // 4. Saat data inspeksi diubah atau dihapus, cache kembali ter-invalidate
+        $inspection->update(['scratch_count' => 4, 'total_damages_detected' => 5]);
+        $this->assertFalse(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+
+        $this->withHeader('Authorization', "Bearer {$adminToken}")
+            ->getJson('/api/v1/admin/dashboard')
+            ->assertStatus(200)
+            ->assertJsonPath('data.damage_detection_stats.total_scratches', 4);
+
+        $this->assertTrue(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+
+        $inspection->delete();
+        $this->assertFalse(Cache::has(AdminController::CACHE_KEY_DASHBOARD));
+    }
+
+    public function test_rate_limiter_throttles_auth_and_inspection_endpoints_with_429(): void
+    {
+        RateLimiter::clear('auth');
+
+        // 1. Uji throttle:auth (maksimal 5 request per menit per IP)
+        for ($i = 1; $i <= 5; $i++) {
+            $res = $this->postJson('/api/v1/auth/login', [
+                'email' => 'user_test@motolens.id',
+                'password' => 'WrongPassword123!',
+            ]);
+            $this->assertNotEquals(429, $res->status());
+        }
+
+        $throttledAuth = $this->postJson('/api/v1/auth/login', [
+            'email' => 'user_test@motolens.id',
+            'password' => 'WrongPassword123!',
+        ]);
+        $throttledAuth->assertStatus(429)
+            ->assertJsonPath('success', false);
+
+        // 2. Uji throttle:inspect (maksimal 10 request per menit per user ID)
+        $userToken = $this->regularUser->createToken('throttle_inspect_token')->plainTextToken;
+
+        for ($i = 1; $i <= 10; $i++) {
+            $res = $this->withHeader('Authorization', "Bearer {$userToken}")
+                ->postJson('/api/v1/motorcycles/inspect', []);
+            // 422 Unprocessable Entity karena payload kosong, tetapi masih diizinkan oleh throttle
+            $res->assertStatus(422);
+        }
+
+        $throttledInspect = $this->withHeader('Authorization', "Bearer {$userToken}")
+            ->postJson('/api/v1/motorcycles/inspect', []);
+
+        $throttledInspect->assertStatus(429)
+            ->assertJsonPath('success', false);
     }
 }

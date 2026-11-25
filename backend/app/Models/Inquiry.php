@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\InquiryStatus;
+use App\Http\Controllers\Api\V1\AdminController;
 use Database\Factories\InquiryFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,17 @@ class Inquiry extends Model
 
     /** Status inquiry yang dianggap aktif (menahan jadwal/booking). */
     public const ACTIVE_STATUSES = [InquiryStatus::Pending, InquiryStatus::Accepted];
+
+    protected static function booted(): void
+    {
+        static::saved(function (): void {
+            AdminController::invalidateDashboardCache();
+        });
+
+        static::deleted(function (): void {
+            AdminController::invalidateDashboardCache();
+        });
+    }
 
     protected function casts(): array
     {
