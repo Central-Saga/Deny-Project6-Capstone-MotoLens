@@ -34,40 +34,55 @@ class AdminController extends Controller
 {
     use ApiResponseTrait;
 
+    public const CACHE_KEY_DASHBOARD = 'admin_dashboard_summary';
+
+    public const CACHE_KEY_INSPECTION_METRICS = 'admin_inspection_metrics';
+
+    public const CACHE_TTL_SECONDS = 300;
+
+    /**
+     * Invalidate cache ringkasan dashboard & metrik inspeksi admin.
+     */
+    public static function invalidateDashboardCache(): void
+    {
+        Cache::forget(self::CACHE_KEY_DASHBOARD);
+        Cache::forget(self::CACHE_KEY_INSPECTION_METRICS);
+    }
+
     /**
      * Ringkasan dashboard analitik pasar, moderasi & statistik deteksi AI.
      */
     public function dashboard(): JsonResponse
     {
-        $totalListings = Motorcycle::count();
-        $approvedListings = Motorcycle::where('moderation_status', ModerationStatus::Approved->value)->count();
-        $pendingModeration = Motorcycle::where('moderation_status', ModerationStatus::Pending->value)->count();
-        $rejectedListings = Motorcycle::where('moderation_status', ModerationStatus::Rejected->value)->count();
-        $totalCatalogValue = (int) Motorcycle::where('moderation_status', ModerationStatus::Approved->value)->sum('seller_price');
+        $payload = Cache::remember(self::CACHE_KEY_DASHBOARD, self::CACHE_TTL_SECONDS, function (): array {
+            $totalListings = Motorcycle::count();
+            $approvedListings = Motorcycle::where('moderation_status', ModerationStatus::Approved->value)->count();
+            $pendingModeration = Motorcycle::where('moderation_status', ModerationStatus::Pending->value)->count();
+            $rejectedListings = Motorcycle::where('moderation_status', ModerationStatus::Rejected->value)->count();
+            $totalCatalogValue = (int) Motorcycle::where('moderation_status', ModerationStatus::Approved->value)->sum('seller_price');
 
-        // Distribusi price label pada listing approved
-        $priceLabels = Motorcycle::where('moderation_status', ModerationStatus::Approved->value)
-            ->select('price_label', DB::raw('count(*) as count'))
-            ->groupBy('price_label')
-            ->pluck('count', 'price_label')
-            ->toArray();
+            // Distribusi price label pada listing approved
+            $priceLabels = Motorcycle::where('moderation_status', ModerationStatus::Approved->value)
+                ->select('price_label', DB::raw('count(*) as count'))
+                ->groupBy('price_label')
+                ->pluck('count', 'price_label')
+                ->toArray();
 
-        // Distribusi grade kondisi
-        $conditionGrades = Motorcycle::where('moderation_status', ModerationStatus::Approved->value)
-            ->select('condition_grade', DB::raw('count(*) as count'))
-            ->groupBy('condition_grade')
-            ->pluck('count', 'condition_grade')
-            ->toArray();
+            // Distribusi grade kondisi
+            $conditionGrades = Motorcycle::where('moderation_status', ModerationStatus::Approved->value)
+                ->select('condition_grade', DB::raw('count(*) as count'))
+                ->groupBy('condition_grade')
+                ->pluck('count', 'condition_grade')
+                ->toArray();
 
-        // Statistik kerusakan visual
-        $damageStats = [
-            'total_scratches' => (int) MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value)->sum('scratch_count'),
-            'total_dents' => (int) MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value)->sum('dent_count'),
-            'total_accidents' => (int) MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value)->sum('accident_count'),
-        ];
+            // Statistik kerusakan visual
+            $damageStats = [
+                'total_scratches' => (int) MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value)->sum('scratch_count'),
+                'total_dents' => (int) MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value)->sum('dent_count'),
+                'total_accidents' => (int) MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value)->sum('accident_count'),
+            ];
 
-        return $this->successResponse(
-            data: [
+            return [
                 'overview' => [
                     'total_listings' => $totalListings,
                     'approved_listings' => $approvedListings,
@@ -94,7 +109,11 @@ class AdminController extends Controller
                     'D' => $conditionGrades['D'] ?? 0,
                 ],
                 'damage_detection_stats' => $damageStats,
-            ],
+            ];
+        });
+
+        return $this->successResponse(
+            data: $payload,
             message: 'Data ringkasan dashboard admin berhasil diambil.'
         );
     }
@@ -170,12 +189,13 @@ class AdminController extends Controller
         $motorcycle->moderation_status = $newStatus;
         $motorcycle->save();
 
-        // Invalidate cache katalog
+        // Invalidate cache katalog & dashboard admin
         if (Cache::has('catalog_cache_version')) {
             Cache::increment('catalog_cache_version');
         } else {
             Cache::forever('catalog_cache_version', 2);
         }
+        self::invalidateDashboardCache();
 
         // Trigger Event & Notification ke penjual
         event(new ListingModerationStatusChanged($motorcycle, $oldStatus, $newStatus, $reason));
@@ -197,23 +217,23 @@ class AdminController extends Controller
      */
     public function inspectionMetrics(): JsonResponse
     {
-        $totalInspections = MotorcycleInspection::count();
-        $completed = MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value);
-        $failedCount = MotorcycleInspection::where('inspection_status', InspectionStatus::Failed->value)->count();
+        $payload = Cache::remember(self::CACHE_KEY_INSPECTION_METRICS, self::CACHE_TTL_SECONDS, function (): array {
+            $totalInspections = MotorcycleInspection::count();
+            $completed = MotorcycleInspection::where('inspection_status', InspectionStatus::Completed->value);
+            $failedCount = MotorcycleInspection::where('inspection_status', InspectionStatus::Failed->value)->count();
 
-        $avgInferenceTime = (int) $completed->avg('inference_time_ms');
-        $minInferenceTime = (int) $completed->min('inference_time_ms');
-        $maxInferenceTime = (int) $completed->max('inference_time_ms');
-        $avgConfidence = round((float) $completed->avg('average_confidence'), 4);
+            $avgInferenceTime = (int) $completed->avg('inference_time_ms');
+            $minInferenceTime = (int) $completed->min('inference_time_ms');
+            $maxInferenceTime = (int) $completed->max('inference_time_ms');
+            $avgConfidence = round((float) $completed->avg('average_confidence'), 4);
 
-        $totalScratches = (int) $completed->sum('scratch_count');
-        $totalDents = (int) $completed->sum('dent_count');
-        $totalAccidents = (int) $completed->sum('accident_count');
+            $totalScratches = (int) $completed->sum('scratch_count');
+            $totalDents = (int) $completed->sum('dent_count');
+            $totalAccidents = (int) $completed->sum('accident_count');
 
-        $verifiedCount = MotorcycleInspection::where('verification_status', VerificationStatus::Submitted->value)->count();
+            $verifiedCount = MotorcycleInspection::where('verification_status', VerificationStatus::Submitted->value)->count();
 
-        return $this->successResponse(
-            data: [
+            return [
                 'total_inspections' => $totalInspections,
                 'completed_inspections' => $completed->count(),
                 'failed_inspections' => $failedCount,
@@ -232,7 +252,11 @@ class AdminController extends Controller
                         'total' => $totalScratches + $totalDents + $totalAccidents,
                     ],
                 ],
-            ],
+            ];
+        });
+
+        return $this->successResponse(
+            data: $payload,
             message: 'Metrik performa model inspeksi AI berhasil diambil.'
         );
     }

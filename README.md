@@ -91,8 +91,17 @@ docker compose exec backend php artisan db:seed --force
 | **Web Showroom & Admin** | `http://localhost:3000` | Katalog Publik, Simulator AI, Komparasi, Garasi Saya (`/garasi-saya`), Admin (`/admin`) |
 | **Backend REST API** | `http://localhost:8000/api/v1` | Endpoint utama untuk Web & Android (`APP_ENV=production`, `APP_DEBUG=false`) |
 | **API Health Check** | `http://localhost:8000/api/v1/health` | Pemeriksaan status PostgreSQL, Redis, Model ONNX, dan Python |
-| **PostgreSQL 16** | Internal Docker Network (`postgres:5432`) | Port **tidak diekspos ke host** demi keamanan. Akses CLI: `docker compose exec postgres psql -U postgres -d motolens` |
-| **Redis 7** | Internal Docker Network (`redis:6379`) | Port **tidak diekspos ke host** demi keamanan (hanya diakses internal oleh `backend`). |
+| **PostgreSQL 16** | Internal Docker Network (`postgres:5432`) | Penyimpanan relasional transaksional utama (`users`, `motorcycle_models`, `motorcycles`, `motorcycle_inspections`, `inquiries`, `reports`, `activity_log`). Port **tidak diekspos ke host** demi keamanan. Akses CLI: `docker compose exec postgres psql -U postgres -d motolens` |
+| **Redis 7** | Internal Docker Network (`redis:6379`) | In-memory cache & rate-limiter (`CACHE_STORE=redis`, `phpredis`). Port **tidak diekspos ke host** demi keamanan (hanya diakses internal oleh `backend`). |
+
+### Peran Arsitektur PostgreSQL vs Redis di Backend Laravel 13
+1. **PostgreSQL 16 (Persistent Relational Source of Truth):**
+   - Menyimpan seluruh transaksi utama, histori harga (`motorcycle_price_histories`), snapshot kalkulasi harga AI (`price_calculation_snapshot` JSON), dan audit trail (`spatie/laravel-activitylog`).
+2. **Redis 7 (High-Speed Caching, Event-Driven Invalidation & Rate Limiting):**
+   - **Caching Agregasi Dashboard & Katalog:** Menyimpan cache ringkasan analitik admin (`admin_dashboard_summary` & `admin_inspection_metrics`, TTL 300 detik), katalog publik terfilter (`catalog_v*`, TTL 300 detik), serta daftar model referensi (`models_list_*`, TTL 600 detik).
+   - **Automatic Cache Invalidation (`Cache::forget`):** Setiap kali data `MotorcycleInspection`, `Motorcycle`, atau `Inquiry` dibuat, diperbarui, dimoderasi, atau dihapus, model lifecycle hook otomatis memanggil `AdminController::invalidateDashboardCache()` sehingga dashboard tidak pernah menampilkan data basi (*stale*).
+   - **Rate Limiting (`RateLimiter`):** Melindungi endpoint autentikasi (`throttle:auth` — maks 5 request/menit per IP) dari *brute-force* dan endpoint inferensi CPU YOLOv8 (`throttle:inspect` — maks 10 request/menit per user/IP) dari spam request dengan respons HTTP `429 Too Many Requests`.
+   - **Live Health Verification (`/api/v1/health`):** Memverifikasi operasi baca/tulis cache (`health_check_ping`) sekaligus koneksi `PING/PONG` langsung ke server Redis.
 
 ---
 
